@@ -30,7 +30,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (rating < 1 || rating > 5) {
-      setError('Please choose a rating between 1 and 5 stars.');
+      setError('Veuillez attribuer une note entre 1 et 5 étoiles.');
       return;
     }
 
@@ -49,7 +49,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
         onClose();
       }, 1200);
     } catch (err: any) {
-      setError(err.message || 'Failed to submit review.');
+      setError(err.message || 'Impossible d\'enregistrer votre avis.');
       setSubmitting(false);
     }
   };
@@ -70,19 +70,19 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
             <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-8 h-8" />
             </div>
-            <h3 className="text-xl font-bold text-slate-900">Review Submitted!</h3>
+            <h3 className="text-xl font-bold text-slate-900">Avis Enregistré !</h3>
             <p className="text-xs text-slate-500">
-              Thank you for contributing to our community's trust and quality.
+              Merci pour votre retour. Cela renforce la confiance au sein de notre communauté.
             </p>
           </div>
         ) : (
           <div>
             <div className="mb-5">
               <span className="text-xs font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-2.5 py-1 rounded-md">
-                Verified Service Review
+                Avis Client Vérifié
               </span>
               <h3 className="text-xl font-bold text-slate-900 mt-2">
-                Rate your service with {request.listing?.provider?.full_name || 'Provider'}
+                Évaluer la prestation de {request.listing?.provider?.full_name || 'Prestataire'}
               </h3>
               <p className="text-xs text-slate-500 mt-1">
                 {request.listing?.title}
@@ -97,10 +97,10 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Interactive Star Rating */}
+              {/* Notation par étoiles */}
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center space-y-2">
                 <label className="block text-xs font-semibold text-slate-700">
-                  Select Rating (1 to 5 Stars)
+                  Attribuer une note (1 à 5 Étoiles)
                 </label>
                 <div className="flex justify-center">
                   <StarRating
@@ -111,38 +111,38 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
                   />
                 </div>
                 <p className="text-xs font-medium text-amber-700">
-                  {rating === 5 && 'Outstanding & Highly Recommended (5/5)'}
-                  {rating === 4 && 'Great Experience (4/5)'}
-                  {rating === 3 && 'Average Service (3/5)'}
-                  {rating === 2 && 'Needs Improvement (2/5)'}
-                  {rating === 1 && 'Unsatisfactory (1/5)'}
+                  {rating === 5 && 'Excellent & Hautement Recommandé (5/5)'}
+                  {rating === 4 && 'Très Bonne Prestation (4/5)'}
+                  {rating === 3 && 'Service Correct (3/5)'}
+                  {rating === 2 && 'Peut Mieux Faire (2/5)'}
+                  {rating === 1 && 'Insatisfaisant (1/5)'}
                 </p>
               </div>
 
-              {/* Written comment */}
+              {/* Commentaire écrit */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1">
                   <MessageSquare className="w-3.5 h-3.5 text-slate-400" />
-                  Written Review / Feedback
+                  Votre commentaire / Avis d'expérience
                 </label>
                 <textarea
                   rows={4}
                   required
-                  placeholder="Share details about punctuality, care quality, communication, and professionalism..."
+                  placeholder="Partagez vos impressions sur la ponctualité, la qualité de la prise en charge, la pédagogie et le relationnel..."
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-amber-500 focus:bg-white outline-none"
                 />
               </div>
 
-              {/* Submit Button */}
+              {/* Bouton de soumission */}
               <div className="pt-2 flex gap-3">
                 <button
                   type="button"
                   onClick={onClose}
                   className="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs sm:text-sm font-semibold transition"
                 >
-                  Cancel
+                  Annuler
                 </button>
                 <button
                   type="submit"
@@ -152,10 +152,10 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
                   {submitting ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Submitting...</span>
+                      <span>Publication...</span>
                     </>
                   ) : (
-                    <span>Post Review</span>
+                    <span>Publier mon avis</span>
                   )}
                 </button>
               </div>

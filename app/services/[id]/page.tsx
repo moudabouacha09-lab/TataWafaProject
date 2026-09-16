@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ServiceListing, Review } from '@/types';
 import { DataStore } from '@/lib/store';
 import { StarRating } from '@/components/StarRating';
 import { RequestModal } from '@/components/RequestModal';
-import { formatPrice, getCategoryBadge, formatDateShort } from '@/lib/utils';
+import { formatPrice, getCategoryBadge, formatDateShort, ADMIN_PHONE } from '@/lib/utils';
 import { 
   ArrowLeft, 
   MapPin, 
@@ -20,14 +20,11 @@ import {
   UserCheck2, 
   HandCoins,
   MessageSquare,
-  Loader2,
-  CheckCircle2,
-  Share2
+  Loader2
 } from 'lucide-react';
 
 export default function ListingDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const id = params.id as string;
 
   const [listing, setListing] = useState<ServiceListing | null>(null);
@@ -67,7 +64,7 @@ export default function ListingDetailPage() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center text-slate-400 space-y-3">
         <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-        <p className="text-sm font-medium">Loading service profile details...</p>
+        <p className="text-sm font-medium">Chargement du profil du prestataire...</p>
       </div>
     );
   }
@@ -75,14 +72,14 @@ export default function ListingDetailPage() {
   if (!listing) {
     return (
       <div className="max-w-xl mx-auto py-20 px-4 text-center space-y-4">
-        <h2 className="text-2xl font-bold text-slate-900">Service listing not found</h2>
-        <p className="text-sm text-slate-500">The listing you are looking for might have been moved or removed.</p>
+        <h2 className="text-2xl font-bold text-slate-900">Annonce non trouvée</h2>
+        <p className="text-sm text-slate-500">Cette annonce n'existe plus ou a été retirée.</p>
         <Link
           href="/"
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to All Listings</span>
+          <span>Retour aux annonces</span>
         </Link>
       </div>
     );
@@ -94,26 +91,25 @@ export default function ListingDetailPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       
-      {/* Back button */}
+      {/* Bouton retour */}
       <div>
         <Link
           href="/"
           className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-indigo-600 transition"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to Browse Listings</span>
+          <span>Retour aux annonces</span>
         </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Left 2 Columns: Main Listing Info & Reviews */}
+        {/* Colonne Principale */}
         <div className="lg:col-span-2 space-y-8">
           
-          {/* Main Hero Card */}
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
             
-            {/* Cover Image */}
+            {/* Photo */}
             <div className="relative h-64 sm:h-80 w-full bg-slate-100">
               {listing.photo_url ? (
                 <img
@@ -139,7 +135,7 @@ export default function ListingDetailPage() {
               </div>
             </div>
 
-            {/* Profile Header Details */}
+            {/* Détails du profil */}
             <div className="p-6 sm:p-8 space-y-6">
               
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6">
@@ -156,14 +152,16 @@ export default function ListingDetailPage() {
                   </div>
                   <div>
                     <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
-                      {provider?.full_name || 'Verified Provider'}
-                      <ShieldCheck className="w-5 h-5 text-emerald-600" title="Verified by site admin" />
+                      {provider?.full_name || 'Prestataire'}
+                      <span title="Identité vérifiée">
+                        <ShieldCheck className="w-5 h-5 text-emerald-600" />
+                      </span>
                     </h1>
                     <div className="flex items-center gap-3 text-xs text-slate-500 mt-1 flex-wrap">
                       {listing.location && (
                         <span className="flex items-center gap-1">
                           <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                          {listing.location}
+                          {listing.location} (Alger)
                         </span>
                       )}
                       <span>•</span>
@@ -179,32 +177,31 @@ export default function ListingDetailPage() {
 
                 <div className="text-left sm:text-right">
                   <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-                    {formatPrice(listing.price)}
-                    <span className="text-xs font-normal text-slate-500 ml-1">/ hour</span>
+                    {formatPrice(listing.price, listing.price_unit || 'séance')}
                   </div>
-                  <span className="text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-semibold border border-emerald-200 inline-block mt-1">
-                    Direct Cash / In-Person Pay
+                  <span className="text-[11px] text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded font-semibold border border-emerald-200 inline-block mt-1">
+                    Paiement direct en espèces (DA)
                   </span>
                 </div>
 
               </div>
 
-              {/* Title & Description */}
+              {/* Titre et description */}
               <div className="space-y-4">
                 <h2 className="text-lg sm:text-xl font-bold text-slate-900">
                   {listing.title}
                 </h2>
                 <div className="prose prose-slate max-w-none text-sm text-slate-700 leading-relaxed whitespace-pre-line">
-                  {listing.description || 'No detailed description provided.'}
+                  {listing.description || 'Aucune description fournie.'}
                 </div>
               </div>
 
-              {/* Provider Bio if present */}
+              {/* Biographie */}
               {provider?.bio && (
                 <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-2">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
                     <UserCheck2 className="w-4 h-4 text-indigo-600" />
-                    About the Provider
+                    À propos du prestataire
                   </h3>
                   <p className="text-xs text-slate-600 leading-relaxed">
                     {provider.bio}
@@ -212,13 +209,13 @@ export default function ListingDetailPage() {
                 </div>
               )}
 
-              {/* Availability schedule */}
+              {/* Disponibilités */}
               <div className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-5 flex items-start gap-3">
                 <Clock className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="text-xs font-bold text-indigo-950 uppercase tracking-wide">Availability Schedule</h4>
+                  <h4 className="text-xs font-bold text-indigo-950 uppercase tracking-wide">Créneaux & Disponibilités</h4>
                   <p className="text-xs text-indigo-800 font-medium mt-1">
-                    {listing.availability || 'Flexible schedule. Coordinate specific hours via request form.'}
+                    {listing.availability || 'Horaires flexibles. À convenir lors de la coordination téléphonique.'}
                   </p>
                 </div>
               </div>
@@ -227,17 +224,17 @@ export default function ListingDetailPage() {
 
           </div>
 
-          {/* Customer Reviews Section */}
+          {/* Avis Clients */}
           <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
             
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
                 <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                   <MessageSquare className="w-5 h-5 text-amber-500" />
-                  Verified Client Reviews ({reviews.length})
+                  Avis Clients Vérifiés ({reviews.length})
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Reviews are written only by clients after service completion.
+                  Publiés uniquement après la réalisation effective de la prestation.
                 </p>
               </div>
 
@@ -251,8 +248,8 @@ export default function ListingDetailPage() {
 
             {reviews.length === 0 ? (
               <div className="text-center py-8 text-slate-400 space-y-2">
-                <p className="text-sm font-medium">No reviews posted yet.</p>
-                <p className="text-xs text-slate-400">Be among the first to book and share your feedback after completion!</p>
+                <p className="text-sm font-medium">Aucun avis publié pour l'instant.</p>
+                <p className="text-xs text-slate-400">Soyez parmi les premiers à réserver et partager votre retour d'expérience !</p>
               </div>
             ) : (
               <div className="space-y-4 divide-y divide-slate-100">
@@ -265,7 +262,7 @@ export default function ListingDetailPage() {
                         </div>
                         <div>
                           <p className="text-xs font-bold text-slate-900">
-                            {rev.client?.full_name || 'Verified Client'}
+                            {rev.client?.full_name || 'Client vérifié'}
                           </p>
                           <p className="text-[10px] text-slate-400">{formatDateShort(rev.created_at)}</p>
                         </div>
@@ -286,61 +283,57 @@ export default function ListingDetailPage() {
 
         </div>
 
-        {/* Right Column: Request Action Card & Trust Box */}
+        {/* Colonne Droite: Action de réservation */}
         <div className="space-y-6">
           
-          {/* Booking / Request Action Box */}
           <div className="sticky top-24 bg-white rounded-3xl border border-slate-200 p-6 sm:p-7 shadow-soft space-y-6">
             
             <div>
-              <span className="text-xs font-semibold text-slate-500">Service Rate</span>
+              <span className="text-xs font-semibold text-slate-500">Tarif proposé</span>
               <div className="text-3xl font-extrabold text-slate-900 mt-0.5">
-                {formatPrice(listing.price)}
-                <span className="text-sm font-normal text-slate-500 ml-1">/ hour</span>
+                {formatPrice(listing.price, listing.price_unit || 'séance')}
               </div>
             </div>
 
-            {/* Request Button */}
+            {/* Bouton de demande */}
             <button
               onClick={() => setIsRequestModalOpen(true)}
               className="w-full py-3.5 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-md shadow-indigo-200 transition flex items-center justify-center gap-2 group"
             >
               <Calendar className="w-4 h-4 group-hover:scale-110 transition" />
-              <span>Request Service</span>
+              <span>Demander ce service</span>
             </button>
 
             <p className="text-[11px] text-slate-500 text-center leading-normal">
-              No online payment or deposit required today. You will receive an in-app confirmation and our site coordinator will call you directly.
+              Aucun paiement en ligne n'est demandé. Vous recevrez une confirmation et l'administrateur vous appellera par téléphone.
             </p>
 
             <hr className="border-slate-100" />
 
-            {/* Safety & Manual Coordination Highlights */}
+            {/* Garanties */}
             <div className="space-y-3.5">
               <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                How this booking works
+                Comment se déroule la réservation
               </h4>
 
               <div className="flex items-start gap-2.5 text-xs text-slate-600">
                 <PhoneCall className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
                 <span>
-                  <strong>1. Offline Phone Confirmation:</strong> Admin contacts you and the provider to arrange all schedule details.
+                  <strong>1. Appel de coordination :</strong> L'administrateur vous appelle pour valider le créneau avec le prestataire.
                 </span>
               </div>
 
-              {listing.category === 'babysitting' && (
-                <div className="flex items-start gap-2.5 text-xs text-slate-600">
-                  <UserCheck2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <span>
-                    <strong>2. In-Person ID Check:</strong> Provider presents government photo ID directly at your home.
-                  </span>
-                </div>
-              )}
+              <div className="flex items-start gap-2.5 text-xs text-slate-600">
+                <UserCheck2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <span>
+                  <strong>2. Vérification sur place :</strong> Le prestataire présente sa pièce d'identité en main propre lors de la première séance.
+                </span>
+              </div>
 
               <div className="flex items-start gap-2.5 text-xs text-slate-600">
                 <HandCoins className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                 <span>
-                  <strong>3. Direct Cash Payment:</strong> Pay the provider directly in cash upon completion. Zero middleman fees.
+                  <strong>3. Paiement en espèces (DA) :</strong> Règlement direct de main à main à la fin de la séance ou du mois.
                 </span>
               </div>
             </div>
@@ -351,7 +344,7 @@ export default function ListingDetailPage() {
 
       </div>
 
-      {/* Request Modal */}
+      {/* Modal de réservation */}
       <RequestModal
         listing={listing}
         isOpen={isRequestModalOpen}

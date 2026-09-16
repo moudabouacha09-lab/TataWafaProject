@@ -9,8 +9,7 @@ import { DataStore } from '@/lib/store';
 export const RoleSwitcher: React.FC = () => {
   const { role, profile, switchDemoRole, isConfigured } = useAuth();
 
-  // Strict Production Safety: When Supabase is configured with real credentials,
-  // the demo switcher is completely disabled and removed from the DOM.
+  // En production avec Supabase, le sélecteur de démo est complètement masqué et inactif
   if (isConfigured) {
     return null;
   }
@@ -18,28 +17,30 @@ export const RoleSwitcher: React.FC = () => {
   const roles: { role: UserRole; label: string; icon: React.ReactNode; desc: string }[] = [
     {
       role: 'client',
-      label: 'Client (Parent / Student)',
+      label: 'Client (Famille / Élève)',
       icon: <UserCheck className="w-4 h-4 text-emerald-600" />,
-      desc: 'Browse, request services & write reviews',
+      desc: 'Explorer, demander un service et laisser un avis',
     },
     {
       role: 'provider',
-      label: 'Provider (Babysitter / Tutor)',
+      label: 'Prestataire (Babysitter / Enseignant)',
       icon: <Briefcase className="w-4 h-4 text-indigo-600" />,
-      desc: 'Manage profile & service listing',
+      desc: 'Publier et gérer son annonce de service',
     },
     {
       role: 'admin',
-      label: 'Admin (Site Owner & Coordinator)',
+      label: 'Admin (Coordinateur Plateforme)',
       icon: <ShieldCheck className="w-4 h-4 text-amber-600" />,
-      desc: 'Realtime dispatch & manual coordination',
+      desc: 'Réception des demandes en direct et coordination par téléphone',
     },
   ];
 
   const handleReset = () => {
-    if (confirm('Reset demo data (profiles, listings, requests, reviews) back to default initial state?')) {
-      DataStore.resetToDemoData();
-      window.location.reload();
+    if (confirm('Voulez-vous effacer toutes les données locales et repartir de zéro ?')) {
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+        window.location.reload();
+      }
     }
   };
 
@@ -48,15 +49,15 @@ export const RoleSwitcher: React.FC = () => {
       <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 font-semibold border border-indigo-700/50">
-            {isConfigured ? 'Supabase Live Connected' : 'Interactive MVP Demo Mode'}
+            {isConfigured ? 'Connexion Supabase Active' : 'Mode Test Local (Alger)'}
           </span>
           <span className="hidden md:inline text-slate-400">
-            Current Persona: <strong className="text-white">{profile?.full_name || 'Guest'}</strong> (Role: <span className="capitalize text-indigo-300">{role}</span>)
+            Rôle actuel : <strong className="text-white">{profile?.full_name || 'Visiteur'}</strong> (<span className="capitalize text-indigo-300">{role === 'provider' ? 'Prestataire' : role}</span>)
           </span>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-slate-400 font-medium">Switch Role:</span>
+          <span className="text-slate-400 font-medium">Changer de rôle :</span>
           {roles.map(r => (
             <button
               key={r.role}
@@ -69,18 +70,18 @@ export const RoleSwitcher: React.FC = () => {
               title={r.desc}
             >
               {r.icon}
-              <span className="capitalize">{r.role}</span>
+              <span>{r.label.split(' ')[0]}</span>
             </button>
           ))}
 
           {!isConfigured && (
             <button
               onClick={handleReset}
-              title="Reset test data to initial seed"
+              title="Vider les données locales et repartir de zéro"
               className="inline-flex items-center gap-1 px-2 py-1 rounded bg-slate-800 hover:bg-rose-900/60 hover:text-rose-200 text-slate-400 transition ml-2 border border-slate-700/60"
             >
               <RefreshCw className="w-3 h-3" />
-              <span>Reset Data</span>
+              <span>Remise à zéro</span>
             </button>
           )}
         </div>

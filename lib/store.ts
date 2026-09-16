@@ -225,12 +225,13 @@ export class DataStore {
       id: listing.id || `lst_${Date.now()}`,
       provider_id: listing.provider_id,
       category: listing.category || 'babysitting',
-      title: listing.title || 'Untitled Service',
+      title: listing.title || 'Service Proposé',
       description: listing.description || '',
-      price: listing.price || 20,
+      price: listing.price || 1500,
+      price_unit: listing.price_unit || 'séance',
       availability: listing.availability || 'Flexible',
-      location: listing.location || 'Local Area',
-      photo_url: listing.photo_url || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=80',
+      location: listing.location || 'Alger Centre',
+      photo_url: listing.photo_url || null,
       created_at: listing.created_at || now,
     };
 

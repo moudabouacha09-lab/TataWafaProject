@@ -4,6 +4,8 @@ export type ServiceCategory = 'babysitting' | 'teaching';
 
 export type RequestStatus = 'new' | 'in_progress' | 'completed' | 'cancelled';
 
+export type PriceUnit = 'séance' | 'mois' | 'heure';
+
 export interface Profile {
   id: string;
   role: UserRole;
@@ -22,6 +24,7 @@ export interface ServiceListing {
   title: string;
   description: string | null;
   price: number;
+  price_unit?: PriceUnit;
   availability: string | null;
   location: string | null;
   photo_url: string | null;

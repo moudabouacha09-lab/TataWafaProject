@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { 
-  Shield, 
   Calendar, 
   BookOpen, 
   User, 
@@ -13,14 +12,12 @@ import {
   Menu, 
   X, 
   LayoutDashboard, 
-  HeartHandshake,
-  CheckCircle2,
-  Sparkles
+  HeartHandshake
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
-  const { role, profile, logout, user } = useAuth();
+  const { role, profile, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isActive = (path: string) => pathname === path;
@@ -37,12 +34,12 @@ export const Navbar: React.FC = () => {
             </div>
             <div>
               <div className="font-bold text-lg leading-tight text-slate-900 tracking-tight flex items-center gap-1.5">
-                CareMatch
+                TataWafa
                 <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
-                  Verified MVP
+                  Alger & Environs
                 </span>
               </div>
-              <p className="text-xs text-slate-500 font-normal">Babysitting & Teaching</p>
+              <p className="text-xs text-slate-500 font-normal">Garde d'enfants & Cours Particuliers</p>
             </div>
           </Link>
 
@@ -56,7 +53,7 @@ export const Navbar: React.FC = () => {
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              Browse Services
+              Explorer les services
             </Link>
 
             {/* Client Links */}
@@ -70,7 +67,7 @@ export const Navbar: React.FC = () => {
                 }`}
               >
                 <Calendar className="w-4 h-4" />
-                <span>My Requests</span>
+                <span>Mes demandes</span>
               </Link>
             )}
 
@@ -86,7 +83,7 @@ export const Navbar: React.FC = () => {
                   }`}
                 >
                   <BookOpen className="w-4 h-4" />
-                  <span>My Service Listing</span>
+                  <span>Mon annonce de service</span>
                 </Link>
                 <Link
                   href="/provider/profile"
@@ -97,7 +94,7 @@ export const Navbar: React.FC = () => {
                   }`}
                 >
                   <User className="w-4 h-4" />
-                  <span>My Reviews & Bio</span>
+                  <span>Mon profil & Avis</span>
                 </Link>
               </>
             )}
@@ -113,7 +110,7 @@ export const Navbar: React.FC = () => {
                 }`}
               >
                 <LayoutDashboard className="w-4 h-4 text-amber-600" />
-                <span>Admin Coordinator Hub</span>
+                <span>Espace Coordinateur Admin</span>
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping ml-1" />
               </Link>
             )}
@@ -137,14 +134,14 @@ export const Navbar: React.FC = () => {
                     </p>
                     <span className="text-[10px] text-slate-500 capitalize flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      {role}
+                      {role === 'provider' ? 'Prestataire' : role === 'admin' ? 'Admin' : 'Famille'}
                     </span>
                   </div>
                 </div>
 
                 <button
                   onClick={() => logout()}
-                  title="Sign out"
+                  title="Se déconnecter"
                   className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
                 >
                   <LogOut className="w-4 h-4" />
@@ -156,13 +153,13 @@ export const Navbar: React.FC = () => {
                   href="/auth/login"
                   className="px-3.5 py-1.5 text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition"
                 >
-                  Log in
+                  Connexion
                 </Link>
                 <Link
                   href="/auth/signup"
                   className="px-4 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition"
                 >
-                  Sign up
+                  Créer un compte
                 </Link>
               </div>
             )}
@@ -194,7 +191,7 @@ export const Navbar: React.FC = () => {
               </div>
               <div>
                 <p className="text-sm font-semibold text-slate-900">{profile.full_name}</p>
-                <p className="text-xs text-slate-500 capitalize">{role} account</p>
+                <p className="text-xs text-slate-500 capitalize">{role === 'provider' ? 'Prestataire' : role}</p>
               </div>
             </div>
           )}
@@ -204,7 +201,7 @@ export const Navbar: React.FC = () => {
             onClick={() => setMobileMenuOpen(false)}
             className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100"
           >
-            Browse Services
+            Explorer les services
           </Link>
 
           {role === 'client' && (
@@ -213,7 +210,7 @@ export const Navbar: React.FC = () => {
               onClick={() => setMobileMenuOpen(false)}
               className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100"
             >
-              My Service Requests
+              Mes demandes de service
             </Link>
           )}
 
@@ -224,14 +221,14 @@ export const Navbar: React.FC = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100"
               >
-                Manage My Service Listing
+                Gérer mon annonce
               </Link>
               <Link
                 href="/provider/profile"
                 onClick={() => setMobileMenuOpen(false)}
                 className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100"
               >
-                View My Reviews & Bio
+                Voir mes avis & profil
               </Link>
             </>
           )}
@@ -242,7 +239,7 @@ export const Navbar: React.FC = () => {
               onClick={() => setMobileMenuOpen(false)}
               className="block px-3 py-2 rounded-lg text-sm font-medium text-amber-800 bg-amber-50 border border-amber-200"
             >
-              Admin Hub (Live Dispatch)
+              Espace Coordinateur Admin
             </Link>
           )}
 
@@ -255,7 +252,7 @@ export const Navbar: React.FC = () => {
                 }}
                 className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-rose-600 hover:bg-rose-50"
               >
-                Sign Out
+                Se déconnecter
               </button>
             ) : (
               <div className="grid grid-cols-2 gap-2 pt-2">
@@ -264,14 +261,14 @@ export const Navbar: React.FC = () => {
                   onClick={() => setMobileMenuOpen(false)}
                   className="text-center px-4 py-2 text-sm font-medium border border-slate-300 rounded-lg text-slate-700"
                 >
-                  Log in
+                  Connexion
                 </Link>
                 <Link
                   href="/auth/signup"
                   onClick={() => setMobileMenuOpen(false)}
                   className="text-center px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg"
                 >
-                  Sign up
+                  Inscription
                 </Link>
               </div>
             )}

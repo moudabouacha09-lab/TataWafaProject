@@ -2,30 +2,24 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ServiceRequest, RequestStatus } from '@/types';
+import { ServiceRequest } from '@/types';
 import { DataStore } from '@/lib/store';
 import { useAuth } from '@/lib/auth-context';
 import { ReviewModal } from '@/components/ReviewModal';
 import { StarRating } from '@/components/StarRating';
-import { getStatusBadgeStyle, formatDate, formatPrice, getCategoryBadge } from '@/lib/utils';
+import { getStatusBadgeStyle, formatDate, formatPrice, getCategoryBadge, ADMIN_PHONE } from '@/lib/utils';
 import { 
   Calendar, 
   Clock, 
-  MapPin, 
   PhoneCall, 
   Star, 
-  MessageSquare, 
   CheckCircle2, 
-  AlertCircle, 
   Loader2, 
-  ShieldCheck,
-  Baby,
-  GraduationCap,
   ArrowRight
 } from 'lucide-react';
 
 export default function MyRequestsPage() {
-  const { profile, user, role } = useAuth();
+  const { profile, user } = useAuth();
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -34,7 +28,7 @@ export default function MyRequestsPage() {
   const loadRequests = async () => {
     setLoading(true);
     try {
-      const clientId = profile?.id || user?.id || 'usr_client_1';
+      const clientId = profile?.id || user?.id || 'usr_client_guest';
       const data = await DataStore.getRequests({ role: 'client', userId: clientId });
       setRequests(data);
     } catch (e) {
@@ -64,17 +58,17 @@ export default function MyRequestsPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       
-      {/* Header */}
+      {/* En-tête */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-6">
         <div>
           <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md">
-            Client Dashboard
+            Espace Famille / Client
           </span>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
-            My Service Requests
+            Mes Demandes de Service
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Track your booking requests and leave reviews for completed services.
+            Suivez l'état de vos réservations et évaluez les prestations effectuées.
           </p>
         </div>
 
@@ -82,18 +76,18 @@ export default function MyRequestsPage() {
           href="/"
           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition"
         >
-          <span>Find More Services</span>
+          <span>Trouver d'autres services</span>
           <ArrowRight className="w-4 h-4" />
         </Link>
       </div>
 
-      {/* Filter Tabs */}
+      {/* Onglets de filtrage */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2">
         {[
-          { key: 'all', label: 'All Requests' },
-          { key: 'active', label: 'Active (New & In Progress)' },
-          { key: 'completed', label: 'Completed' },
-          { key: 'cancelled', label: 'Cancelled' },
+          { key: 'all', label: 'Toutes les demandes' },
+          { key: 'active', label: 'En cours (Nouvelles & Coordination)' },
+          { key: 'completed', label: 'Prestations terminées' },
+          { key: 'cancelled', label: 'Annulées' },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -109,28 +103,28 @@ export default function MyRequestsPage() {
         ))}
       </div>
 
-      {/* Requests List */}
+      {/* Liste des demandes */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 text-slate-400 space-y-3">
           <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-          <p className="text-sm font-medium">Loading your requests...</p>
+          <p className="text-sm font-medium">Chargement de vos demandes...</p>
         </div>
       ) : filteredRequests.length === 0 ? (
         <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center max-w-md mx-auto space-y-4 shadow-sm">
           <div className="w-12 h-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
             <Calendar className="w-6 h-6" />
           </div>
-          <h3 className="text-lg font-bold text-slate-900">No requests found</h3>
+          <h3 className="text-lg font-bold text-slate-900">Aucune demande enregistrée</h3>
           <p className="text-xs text-slate-500">
             {filterStatus === 'all'
-              ? "You haven't submitted any service requests yet."
-              : `No requests with status "${filterStatus}".`}
+              ? "Vous n'avez pas encore envoyé de demande de réservation."
+              : `Aucune demande avec le statut sélectionné.`}
           </p>
           <Link
             href="/"
             className="inline-block px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl transition"
           >
-            Browse Babysitters & Tutors
+            Explorer les babysitters & cours
           </Link>
         </div>
       ) : (
@@ -147,7 +141,7 @@ export default function MyRequestsPage() {
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
                   
-                  {/* Provider & Listing Info */}
+                  {/* Infos du prestataire */}
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
                       {req.listing?.photo_url ? (
@@ -164,18 +158,18 @@ export default function MyRequestsPage() {
                           {catBadge?.label}
                         </span>
                         <span className="text-xs text-slate-400">•</span>
-                        <span className="text-xs text-slate-500">Request #{req.id.slice(-6)}</span>
+                        <span className="text-xs text-slate-500">Demande #{req.id.slice(-6)}</span>
                       </div>
                       <h3 className="text-base font-bold text-slate-900 mt-0.5">
-                        {req.listing?.title || 'Service Listing'}
+                        {req.listing?.title || 'Annonce de service'}
                       </h3>
                       <p className="text-xs text-slate-600">
-                        Provider: <strong>{provider?.full_name || 'Assigned Provider'}</strong>
+                        Prestataire : <strong>{provider?.full_name || 'Prestataire assigné'}</strong>
                       </p>
                     </div>
                   </div>
 
-                  {/* Status Badge */}
+                  {/* Badge Statut */}
                   <div className="flex items-center gap-2">
                     <span className={`px-3 py-1 rounded-full text-xs font-bold border ${badge.bg}`}>
                       {badge.label}
@@ -184,10 +178,10 @@ export default function MyRequestsPage() {
 
                 </div>
 
-                {/* Details grid */}
+                {/* Grille de détails */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs bg-slate-50 rounded-xl p-4 border border-slate-100">
                   <div>
-                    <span className="text-slate-400 font-medium block mb-0.5">Requested Date & Time</span>
+                    <span className="text-slate-400 font-medium block mb-0.5">Date & Heure souhaitées</span>
                     <span className="font-bold text-slate-800 flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5 text-indigo-600" />
                       {formatDate(req.requested_datetime)}
@@ -195,43 +189,43 @@ export default function MyRequestsPage() {
                   </div>
 
                   <div>
-                    <span className="text-slate-400 font-medium block mb-0.5">Service Rate & Payment</span>
+                    <span className="text-slate-400 font-medium block mb-0.5">Tarif & Règlement</span>
                     <span className="font-bold text-slate-800">
-                      {req.listing?.price ? formatPrice(req.listing.price) : '$25'}/hr • In-Person Cash
+                      {req.listing?.price ? formatPrice(req.listing.price, req.listing.price_unit || 'séance') : 'Sur devis'} • Espèces (DA)
                     </span>
                   </div>
 
                   <div>
-                    <span className="text-slate-400 font-medium block mb-0.5">Coordination Mode</span>
+                    <span className="text-slate-400 font-medium block mb-0.5">Coordination Plateforme</span>
                     <span className="font-semibold text-indigo-900 flex items-center gap-1">
                       <PhoneCall className="w-3.5 h-3.5 text-indigo-600" />
-                      Admin Phone Verification
+                      Appel Admin : {ADMIN_PHONE}
                     </span>
                   </div>
                 </div>
 
-                {/* Notes */}
+                {/* Note client */}
                 {req.note && (
                   <div className="text-xs text-slate-600 bg-amber-50/50 border border-amber-200/60 rounded-xl p-3">
-                    <span className="font-semibold text-amber-900">Your Note: </span>
+                    <span className="font-semibold text-amber-900">Vos précisions : </span>
                     {req.note}
                   </div>
                 )}
 
-                {/* Review status or Action */}
+                {/* Statut et Actions */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
                   
                   {req.status === 'new' && (
                     <div className="text-xs text-slate-500 flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-                      <span>Waiting for admin phone coordination with provider.</span>
+                      <span>En attente de l'appel de coordination de l'administrateur avec le prestataire.</span>
                     </div>
                   )}
 
                   {req.status === 'in_progress' && (
                     <div className="text-xs text-blue-700 font-medium flex items-center gap-1.5">
                       <PhoneCall className="w-4 h-4 text-blue-600" />
-                      <span>Coordinated! The provider has been scheduled for your appointment.</span>
+                      <span>Coordonné par téléphone ! Le créneau a été convenu avec le prestataire.</span>
                     </div>
                   )}
 
@@ -242,7 +236,7 @@ export default function MyRequestsPage() {
                           <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="text-xs font-bold text-emerald-900">Your Review:</span>
+                              <span className="text-xs font-bold text-emerald-900">Votre avis :</span>
                               <StarRating rating={req.review.rating} size="sm" />
                             </div>
                             <p className="text-xs text-emerald-800 mt-0.5">"{req.review.comment}"</p>
@@ -252,14 +246,14 @@ export default function MyRequestsPage() {
                         <div className="flex items-center justify-between w-full">
                           <span className="text-xs text-emerald-700 font-semibold flex items-center gap-1">
                             <CheckCircle2 className="w-4 h-4" />
-                            Service completed! Please share your experience.
+                            Prestation effectuée ! Donnez votre avis pour la communauté.
                           </span>
                           <button
                             onClick={() => setSelectedReviewRequest(req)}
                             className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-1.5"
                           >
                             <Star className="w-3.5 h-3.5 fill-white" />
-                            <span>Leave Rating & Review</span>
+                            <span>Laisser une note & avis</span>
                           </button>
                         </div>
                       )}
@@ -268,7 +262,7 @@ export default function MyRequestsPage() {
 
                   {req.status === 'cancelled' && (
                     <span className="text-xs text-rose-600 font-medium">
-                      This request was cancelled. Feel free to browse other available providers.
+                      Cette demande a été annulée. Vous pouvez explorer d'autres prestataires disponibles.
                     </span>
                   )}
 
@@ -280,7 +274,7 @@ export default function MyRequestsPage() {
         </div>
       )}
 
-      {/* Review Modal */}
+      {/* Modal d'Avis */}
       {selectedReviewRequest && (
         <ReviewModal
           request={selectedReviewRequest}

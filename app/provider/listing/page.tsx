@@ -3,29 +3,30 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { DataStore } from '@/lib/store';
-import { ServiceListing, ServiceCategory } from '@/types';
+import { ServiceListing, ServiceCategory, PriceUnit } from '@/types';
+import { ALGER_COMMUNES } from '@/lib/constants';
+import { ADMIN_PHONE } from '@/lib/utils';
 import { 
-  BookOpen, 
   Baby, 
   GraduationCap, 
-  DollarSign, 
   Clock, 
   MapPin, 
   Image as ImageIcon, 
   CheckCircle2, 
   AlertCircle, 
   Loader2,
-  Info,
-  Sparkles,
-  PhoneCall
+  PhoneCall,
+  ShieldCheck,
+  FileCheck2,
+  Coins
 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function ProviderListingPage() {
-  const { profile, user, role } = useAuth();
+  const { profile, user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [submittedSuccess, setSubmittedSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Form states
@@ -33,12 +34,14 @@ export default function ProviderListingPage() {
   const [category, setCategory] = useState<ServiceCategory>('babysitting');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [price, setPrice] = useState<number>(25);
+  const [price, setPrice] = useState<number>(2000);
+  const [priceUnit, setPriceUnit] = useState<PriceUnit>('séance');
   const [availability, setAvailability] = useState('');
-  const [location, setLocation] = useState('');
+  const [location, setLocation] = useState<string>(ALGER_COMMUNES[0]);
+  const [phone, setPhone] = useState(profile?.phone || '');
   const [photoUrl, setPhotoUrl] = useState('');
 
-  const providerId = profile?.id || user?.id || 'usr_provider_1';
+  const providerId = profile?.id || user?.id || 'usr_provider_guest';
 
   useEffect(() => {
     const loadListing = async () => {
@@ -51,15 +54,17 @@ export default function ProviderListingPage() {
           setTitle(existing.title);
           setDescription(existing.description || '');
           setPrice(existing.price);
+          setPriceUnit(existing.price_unit || 'séance');
           setAvailability(existing.availability || '');
-          setLocation(existing.location || '');
+          setLocation(existing.location || ALGER_COMMUNES[0]);
           setPhotoUrl(existing.photo_url || '');
         } else {
-          // Defaults for new listing
-          setTitle('Vetted Childcare & Babysitting Service');
-          setAvailability('Weekdays after 4 PM, Weekends all day');
-          setLocation(profile?.location || 'Central City & Surrounding Areas');
-          setPhotoUrl('https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=80');
+          setTitle('Garde d\'enfants attentive & qualifiée');
+          setAvailability('Du dimanche au jeudi après-midi, et weekends');
+          setLocation(profile?.location || 'Alger Centre');
+        }
+        if (profile?.phone) {
+          setPhone(profile.phone);
         }
       } catch (e) {
         console.error(e);
@@ -69,15 +74,27 @@ export default function ProviderListingPage() {
     };
 
     loadListing();
-  }, [providerId, profile?.location]);
+  }, [providerId, profile]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!phone) {
+      setError('Veuillez impérativement renseigner votre numéro de téléphone.');
+      return;
+    }
+
     setSaving(true);
     setError(null);
-    setSuccess(false);
 
     try {
+      if (profile) {
+        await DataStore.saveProfile({
+          ...profile,
+          phone: phone.trim(),
+          location,
+        });
+      }
+
       await DataStore.saveListing({
         id: listingId || undefined,
         provider_id: providerId,
@@ -85,15 +102,15 @@ export default function ProviderListingPage() {
         title: title.trim(),
         description: description.trim(),
         price: Number(price),
+        price_unit: priceUnit,
         availability: availability.trim(),
         location: location.trim(),
         photo_url: photoUrl.trim() || undefined,
       });
 
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 4000);
+      setSubmittedSuccess(true);
     } catch (err: any) {
-      setError(err.message || 'Failed to save listing.');
+      setError(err.message || 'Une erreur est survenue lors de l\'enregistrement de votre annonce.');
     } finally {
       setSaving(false);
     }
@@ -115,17 +132,17 @@ export default function ProviderListingPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       
-      {/* Header */}
+      {/* En-tête */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-6">
         <div>
           <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md">
-            Provider Management
+            Espace Prestataire
           </span>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
-            {listingId ? 'Edit Your Service Listing' : 'Publish Your Service Listing'}
+            {listingId ? 'Modifier mon annonce de service' : 'Publier mon annonce de service'}
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Configure your offering, hourly rates, and availability for parents and students.
+            Proposez vos services de garde d'enfants ou de soutien scolaire aux familles d'Alger.
           </p>
         </div>
 
@@ -133,39 +150,74 @@ export default function ProviderListingPage() {
           href="/provider/profile"
           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold transition"
         >
-          <span>View Public Profile</span>
+          <span>Voir mon profil public</span>
         </Link>
       </div>
 
-      {/* Manual Coordination Notice for Providers */}
-      <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-5 flex items-start gap-3.5">
-        <div className="p-2 rounded-xl bg-indigo-600 text-white shrink-0">
-          <PhoneCall className="w-5 h-5" />
-        </div>
-        <div className="text-xs text-indigo-950 space-y-1">
-          <h4 className="font-bold text-sm">How Requests Reach You</h4>
-          <p className="text-indigo-800 leading-relaxed">
-            In this trust-first MVP, incoming service requests from clients are reviewed by our platform coordinator. The admin will call you directly on your registered phone (<strong>{profile?.phone || '+1 (555) 432-8765'}</strong>) to confirm each job.
-          </p>
-        </div>
-      </div>
+      {submittedSuccess ? (
+        /* Écran de confirmation de soumission avec Vérification en main propre */
+        <div className="bg-white rounded-3xl border border-emerald-200 p-8 sm:p-12 shadow-md text-center space-y-6 animate-in fade-in zoom-in-95 duration-200">
+          <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto shadow-inner">
+            <CheckCircle2 className="w-12 h-12" />
+          </div>
 
-      {/* Main Form */}
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-400 space-y-3">
-          <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-          <p className="text-sm font-medium">Loading listing information...</p>
+          <div className="space-y-2 max-w-xl mx-auto">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+              Votre dossier et votre annonce ont été transmis avec succès !
+            </h2>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Merci pour votre candidature sur la plateforme TataWafa. Votre annonce a bien été enregistrée.
+            </p>
+          </div>
+
+          {/* Encadré d'instructions pour la remise des pièces justificatives en main propre */}
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 text-left max-w-2xl mx-auto space-y-4">
+            <div className="flex items-center gap-2.5 text-indigo-900 font-bold text-sm">
+              <FileCheck2 className="w-5 h-5 text-indigo-600" />
+              <span>Processus de vérification des documents en main propre</span>
+            </div>
+            
+            <p className="text-xs text-slate-700 leading-relaxed">
+              Pour des raisons strictes de sécurité et de protection des données, <strong>aucun document sensible n'est téléversé sur le site internet</strong>. L'administrateur prend en charge la vérification physique de vos pièces justificatives directement en main propre :
+            </p>
+
+            <ul className="space-y-2 text-xs text-slate-600 list-disc list-inside bg-white p-4 rounded-xl border border-slate-200">
+              <li><strong>Pièce d'identité officielle</strong> (Carte nationale biométrique ou Passeport)</li>
+              <li><strong>Justificatifs d'expérience</strong> ou diplômes (Garde d'enfants, Attestation de réussite, Certificat d'études)</li>
+              <li><strong>Coordonnées téléphoniques vérifiées</strong> (l'admin vous appellera à votre numéro)</li>
+            </ul>
+
+            <div className="bg-indigo-50 border border-indigo-200 p-4 rounded-xl text-xs text-indigo-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <span className="font-bold block text-sm">📞 Contact Administratif Direct</span>
+                <span className="text-indigo-800">L'administrateur est joignable pour convenir du rendez-vous :</span>
+              </div>
+              <div className="text-base font-extrabold text-indigo-700 bg-white px-3.5 py-2 rounded-lg border border-indigo-200 text-center shadow-sm">
+                {ADMIN_PHONE}
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-4 flex flex-col sm:flex-row justify-center gap-3">
+            <Link
+              href="/"
+              className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow-md transition"
+            >
+              Retour à l'accueil
+            </Link>
+            <button
+              type="button"
+              onClick={() => setSubmittedSuccess(false)}
+              className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm rounded-xl transition"
+            >
+              Modifier mon annonce
+            </button>
+          </div>
         </div>
       ) : (
+        /* Formulaire de l'annonce */
         <form onSubmit={handleSubmit} className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
           
-          {success && (
-            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm flex items-center gap-2 font-medium">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-              <span>Listing successfully saved! It is now live in the search catalog.</span>
-            </div>
-          )}
-
           {error && (
             <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm flex items-center gap-2 font-medium">
               <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
@@ -173,10 +225,10 @@ export default function ProviderListingPage() {
             </div>
           )}
 
-          {/* Service Category Choice */}
+          {/* Choix de la catégorie */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-              Select Primary Service Category
+              Type de service proposé
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button
@@ -192,8 +244,8 @@ export default function ProviderListingPage() {
                   <Baby className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm text-slate-900">Babysitting & Childcare</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">Infant care, toddler supervision, bedtime routines</p>
+                  <h4 className="font-bold text-sm text-slate-900">Garde d'enfants (Babysitting)</h4>
+                  <p className="text-xs text-slate-500 mt-0.5">Nourrissons, tout-petits, sorties d'école, soirées</p>
                 </div>
               </button>
 
@@ -210,110 +262,137 @@ export default function ProviderListingPage() {
                   <GraduationCap className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm text-slate-900">Teaching & Tutoring</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">Mathematics, sciences, language immersion, homework help</p>
+                  <h4 className="font-bold text-sm text-slate-900">Cours & Soutien scolaire</h4>
+                  <p className="text-xs text-slate-500 mt-0.5">Mathématiques, Langues, Sciences, Primaire / CEM / Lycée</p>
                 </div>
               </button>
             </div>
           </div>
 
-          {/* Listing Title */}
+          {/* Titre de l'annonce */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-              Listing Title
+              Titre de votre annonce
             </label>
             <input
               type="text"
               required
-              placeholder="e.g. Certified CPR Babysitter for Infants & Toddlers"
+              placeholder="Ex: Nounou expérimentée et douce pour enfants à Hydra"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none"
             />
           </div>
 
-          {/* Price & Location */}
+          {/* Téléphone & Commune */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1 flex items-center gap-1">
-                <DollarSign className="w-3.5 h-3.5 text-slate-400" />
-                Hourly Rate ($ / hour)
+                <PhoneCall className="w-3.5 h-3.5 text-indigo-600" />
+                Votre Numéro de Téléphone (Obligatoire)
               </label>
               <input
-                type="number"
+                type="tel"
                 required
-                min={10}
-                max={250}
-                value={price}
-                onChange={(e) => setPrice(Number(e.target.value))}
+                placeholder="Ex: 0550 12 34 56 / 0660 00 00 00"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none"
               />
-              <span className="text-[11px] text-slate-400 mt-1 block">Paid in-person in cash upon service completion.</span>
+              <span className="text-[11px] text-slate-500 mt-1 block">Utilisé par l'administrateur pour la coordination.</span>
             </div>
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1 flex items-center gap-1">
                 <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                Service Area / Neighborhood
+                Commune d'intervention (Alger)
               </label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. Westside, Downtown & North Hills"
+              <select
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none"
-              />
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none cursor-pointer"
+              >
+                {ALGER_COMMUNES.map((commune) => (
+                  <option key={commune} value={commune}>
+                    {commune}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
-          {/* Availability */}
+          {/* Tarif en DA / Séance ou Mois */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1 flex items-center gap-1">
+                <Coins className="w-3.5 h-3.5 text-amber-500" />
+                Montant du tarif (en Dinars Algériens - DA)
+              </label>
+              <input
+                type="number"
+                required
+                min={500}
+                step={100}
+                value={price}
+                onChange={(e) => setPrice(Number(e.target.value))}
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                Unité de facturation
+              </label>
+              <select
+                value={priceUnit}
+                onChange={(e) => setPriceUnit(e.target.value as PriceUnit)}
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none cursor-pointer"
+              >
+                <option value="séance">DA / Séance</option>
+                <option value="mois">DA / Mois</option>
+                <option value="heure">DA / Heure</option>
+              </select>
+              <span className="text-[11px] text-slate-400 mt-1 block">Règlement direct de main à main.</span>
+            </div>
+          </div>
+
+          {/* Disponibilités */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1 flex items-center gap-1">
               <Clock className="w-3.5 h-3.5 text-slate-400" />
-              General Availability Schedule
+              Créneaux horaires & Disponibilités
             </label>
             <input
               type="text"
               required
-              placeholder="e.g. Mon–Thu after 4:00 PM, Full day Saturdays"
+              placeholder="Ex: Du dimanche au jeudi après-midi, ou weekends complets"
               value={availability}
               onChange={(e) => setAvailability(e.target.value)}
               className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none"
             />
           </div>
 
-          {/* Description */}
+          {/* Description & Expérience */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-              Detailed Description & Experience
+              Description de vos compétences & Expérience
             </label>
             <textarea
               rows={4}
               required
-              placeholder="Describe your qualifications, age groups you work with, certifications (CPR, First Aid, degrees), and what parents/students can expect."
+              placeholder="Détaillez votre parcours, vos années d'expérience, les tranches d'âges ou niveaux scolaires pris en charge, et votre approche bienveillante."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none leading-relaxed"
             />
           </div>
 
-          {/* Photo URL & Presets + Supabase Storage TODO Notice */}
+          {/* Photo de profil (Optionnel) */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1">
-                <ImageIcon className="w-3.5 h-3.5 text-slate-400" />
-                Cover Photo (URL or Preset)
-              </label>
-              <span className="text-[10px] font-semibold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded border border-indigo-200">
-                MVP Mode: URL & Presets (Storage Bucket Staged)
-              </span>
-            </div>
-
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 leading-relaxed">
-              <span className="font-semibold text-slate-800">📌 Photo Upload Roadmap Note: </span>
-              The <code className="bg-white px-1.5 py-0.5 rounded text-indigo-700 font-mono text-[11px] border">listing-photos</code> Supabase storage bucket policies are configured in <code className="bg-white px-1.5 py-0.5 rounded text-slate-700 font-mono text-[11px] border">supabase/schema.sql</code>. For this MVP, you can paste an image URL or choose one of our verified curated photos below.
-            </div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1">
+              <ImageIcon className="w-3.5 h-3.5 text-slate-400" />
+              Photo d'illustration (Lien URL ou sélection parmi nos modèles)
+            </label>
 
             <input
               type="url"
@@ -324,7 +403,7 @@ export default function ProviderListingPage() {
             />
             
             <div>
-              <span className="text-[11px] text-slate-500 font-medium block mb-2">Or select a high-quality preset photo:</span>
+              <span className="text-[11px] text-slate-500 font-medium block mb-2">Ou choisissez une photo adaptée :</span>
               <div className="flex items-center gap-3">
                 {samplePhotos[category].map((url, idx) => (
                   <button
@@ -342,7 +421,18 @@ export default function ProviderListingPage() {
             </div>
           </div>
 
-          {/* Submit Button */}
+          {/* Rappel vérification en main propre */}
+          <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 text-xs text-indigo-900 space-y-1">
+            <div className="font-bold flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-indigo-600" />
+              <span>Remise des pièces en main propre</span>
+            </div>
+            <p className="text-slate-600">
+              Aucun document n'est demandé en ligne. Après l'envoi de votre annonce, l'administrateur vous appellera pour convenir d'une entrevue physique de vérification de vos pièces d'identité et diplômes.
+            </p>
+          </div>
+
+          {/* Bouton Enregistrer */}
           <div className="pt-4 border-t border-slate-100 flex justify-end">
             <button
               type="submit"
@@ -352,10 +442,10 @@ export default function ProviderListingPage() {
               {saving ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Saving Listing...</span>
+                  <span>Transmission...</span>
                 </>
               ) : (
-                <span>Save & Publish Listing</span>
+                <span>Soumettre mon annonce</span>
               )}
             </button>
           </div>

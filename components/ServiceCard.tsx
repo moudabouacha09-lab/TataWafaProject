@@ -16,7 +16,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ listing }) => {
   return (
     <div className="group bg-white rounded-2xl border border-slate-200/80 shadow-card hover:shadow-card-hover transition-all duration-300 flex flex-col overflow-hidden">
       
-      {/* Listing Cover / Photo */}
+      {/* Photo de couverture */}
       <div className="relative h-48 sm:h-52 w-full bg-slate-100 overflow-hidden">
         {listing.photo_url ? (
           <img
@@ -30,7 +30,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ listing }) => {
           </div>
         )}
 
-        {/* Category Badge */}
+        {/* Badge de catégorie */}
         <div className="absolute top-3 left-3">
           <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-md shadow-sm border ${badge.badgeClass} bg-white/95`}>
             {listing.category === 'babysitting' ? (
@@ -42,31 +42,33 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ listing }) => {
           </span>
         </div>
 
-        {/* Price Pill */}
+        {/* Tarif en DA */}
         <div className="absolute bottom-3 right-3 bg-slate-900/90 backdrop-blur-md text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
-          {formatPrice(listing.price)} <span className="font-normal text-slate-300">/ hr</span>
+          {formatPrice(listing.price, listing.price_unit || 'séance')}
         </div>
       </div>
 
-      {/* Card Content */}
+      {/* Contenu de la fiche */}
       <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
         
         <div>
-          {/* Provider Mini Info */}
+          {/* Info Prestataire */}
           <div className="flex items-center gap-2.5 mb-2.5">
             <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-200 shrink-0 border border-slate-100">
               {provider?.avatar_url ? (
                 <img src={provider.avatar_url} alt={provider.full_name} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-slate-300 text-slate-700 text-xs font-bold">
+                <div className="w-full h-full flex items-center justify-center bg-indigo-600 text-white text-xs font-bold">
                   {provider?.full_name?.charAt(0) || 'P'}
                 </div>
               )}
             </div>
             <div className="min-w-0">
               <p className="text-xs font-bold text-slate-900 truncate flex items-center gap-1">
-                {provider?.full_name || 'Verified Provider'}
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" title="Verified by admin" />
+                {provider?.full_name || 'Prestataire'}
+                <span title="Vérification physique effectuée">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                </span>
               </p>
               {listing.location && (
                 <p className="text-[11px] text-slate-500 truncate flex items-center gap-0.5">
@@ -77,12 +79,12 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ listing }) => {
             </div>
           </div>
 
-          {/* Listing Title */}
+          {/* Titre de l'annonce */}
           <h3 className="font-bold text-slate-900 text-base leading-snug group-hover:text-indigo-600 transition-colors line-clamp-2">
             {listing.title}
           </h3>
 
-          {/* Listing Description Preview */}
+          {/* Description */}
           {listing.description && (
             <p className="text-xs text-slate-600 mt-2 line-clamp-2 leading-relaxed">
               {listing.description}
@@ -91,7 +93,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ listing }) => {
         </div>
 
         <div className="pt-3 border-t border-slate-100 space-y-3">
-          {/* Availability */}
+          {/* Disponibilités */}
           {listing.availability && (
             <div className="flex items-center gap-1.5 text-xs text-slate-600">
               <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -99,7 +101,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ listing }) => {
             </div>
           )}
 
-          {/* Rating + Action Button */}
+          {/* Avis + Bouton d'action */}
           <div className="flex items-center justify-between pt-1">
             <StarRating
               rating={listing.average_rating || 0}
@@ -112,7 +114,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ listing }) => {
               href={`/services/${listing.id}`}
               className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white text-xs font-semibold transition shadow-sm"
             >
-              <span>View & Request</span>
+              <span>Voir & Réserver</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>

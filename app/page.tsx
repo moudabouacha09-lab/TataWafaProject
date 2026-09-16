@@ -2,30 +2,27 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ServiceListing, ServiceCategory } from '@/types';
+import { ServiceListing } from '@/types';
 import { DataStore } from '@/lib/store';
 import { ServiceCard } from '@/components/ServiceCard';
 import { TrustBanner } from '@/components/TrustBanner';
+import { ALGER_COMMUNES } from '@/lib/constants';
 import { 
   Baby, 
   GraduationCap, 
   Search, 
   MapPin, 
   ShieldCheck, 
-  CheckCircle2, 
-  Star, 
-  ArrowRight,
-  Filter,
-  Sparkles,
-  PhoneCall,
-  Loader2
+  Filter, 
+  Loader2,
+  PlusCircle
 } from 'lucide-react';
 
 export default function HomePage() {
   const [listings, setListings] = useState<ServiceListing[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [locationQuery, setLocationQuery] = useState('');
+  const [selectedCommune, setSelectedCommune] = useState<string>('all');
   const [loading, setLoading] = useState(true);
 
   const fetchListings = async () => {
@@ -33,14 +30,13 @@ export default function HomePage() {
     try {
       const data = await DataStore.getListings({
         category: selectedCategory !== 'all' ? selectedCategory : undefined,
-        query: searchQuery || locationQuery || undefined,
+        query: searchQuery || undefined,
       });
 
-      // Filter by location additionally if specified
       let filtered = data;
-      if (locationQuery) {
+      if (selectedCommune !== 'all') {
         filtered = filtered.filter(l => 
-          l.location?.toLowerCase().includes(locationQuery.toLowerCase())
+          l.location?.toLowerCase().includes(selectedCommune.toLowerCase())
         );
       }
 
@@ -61,7 +57,7 @@ export default function HomePage() {
 
     window.addEventListener('sm_data_change', handleDataChange);
     return () => window.removeEventListener('sm_data_change', handleDataChange);
-  }, [selectedCategory, searchQuery, locationQuery]);
+  }, [selectedCategory, searchQuery, selectedCommune]);
 
   return (
     <div className="min-h-screen">
@@ -74,18 +70,18 @@ export default function HomePage() {
             
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white shadow-sm border border-indigo-100 text-xs font-semibold text-indigo-900">
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>Verified Caregivers & Teachers • Phone-Coordinated Safety</span>
+              <span>Nounous & Enseignants vérifiés en main propre • Alger & Wilaya</span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-tight">
-              Trusted Babysitters & Academic Tutors Near You
+            <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
+              Garde d'Enfants & Cours Particuliers de Confiance à Alger
             </h1>
 
-            <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-              Find caring childcare professionals and expert tutors. Every service request is manually reviewed and coordinated by our team for complete peace of mind.
+            <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed">
+              Trouvez des personnes dévouées et qualifiées près de chez vous. Chaque demande est vérifiée manuellement par notre équipe avant toute mise en relation.
             </p>
 
-            {/* Search & Location Bar */}
+            {/* Barre de Recherche et Sélecteur de Commune */}
             <div className="pt-4 max-w-2xl mx-auto">
               <div className="bg-white p-2.5 rounded-2xl shadow-soft border border-slate-200 flex flex-col sm:flex-row items-center gap-2">
                 
@@ -93,7 +89,7 @@ export default function HomePage() {
                   <Search className="w-4 h-4 text-slate-400 shrink-0" />
                   <input
                     type="text"
-                    placeholder="Search babysitter, math tutor..."
+                    placeholder="Recherche (ex: Nounou, Mathématiques...)"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full text-xs sm:text-sm bg-transparent outline-none text-slate-800 placeholder-slate-400"
@@ -102,21 +98,26 @@ export default function HomePage() {
 
                 <div className="flex items-center gap-2 px-3 py-2 w-full sm:w-1/2">
                   <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
-                  <input
-                    type="text"
-                    placeholder="Location / Neighborhood"
-                    value={locationQuery}
-                    onChange={(e) => setLocationQuery(e.target.value)}
-                    className="w-full text-xs sm:text-sm bg-transparent outline-none text-slate-800 placeholder-slate-400"
-                  />
+                  <select
+                    value={selectedCommune}
+                    onChange={(e) => setSelectedCommune(e.target.value)}
+                    className="w-full text-xs sm:text-sm bg-transparent outline-none text-slate-800 cursor-pointer"
+                  >
+                    <option value="all">Toutes les communes d'Alger</option>
+                    {ALGER_COMMUNES.map((commune) => (
+                      <option key={commune} value={commune}>
+                        {commune}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <button
                   type="button"
                   onClick={fetchListings}
-                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-200 transition"
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-200 transition whitespace-nowrap"
                 >
-                  Search
+                  Filtrer
                 </button>
               </div>
             </div>
@@ -126,15 +127,15 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Main Content Area */}
+      {/* Zone Principale des Annonces */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         
-        {/* Category Filter Tabs */}
+        {/* Onglets de Catégories */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Available Service Providers</h2>
+            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Annonces & Prestataires Disponibles</h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-              Browse profiles, view past client reviews, and send a direct booking request.
+              Consultez les profils, les avis clients et envoyez une demande de mise en relation.
             </p>
           </div>
 
@@ -147,7 +148,7 @@ export default function HomePage() {
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              All Services ({listings.length})
+              Tous ({listings.length})
             </button>
             <button
               onClick={() => setSelectedCategory('babysitting')}
@@ -158,7 +159,7 @@ export default function HomePage() {
               }`}
             >
               <Baby className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Babysitting</span>
+              <span>Garde d'enfants</span>
             </button>
             <button
               onClick={() => setSelectedCategory('teaching')}
@@ -169,36 +170,47 @@ export default function HomePage() {
               }`}
             >
               <GraduationCap className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Teaching</span>
+              <span>Soutien scolaire</span>
             </button>
           </div>
         </div>
 
-        {/* Listings Grid */}
+        {/* Grille des Annonces */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400 space-y-3">
             <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-            <p className="text-sm font-medium">Loading verified service listings...</p>
+            <p className="text-sm font-medium">Chargement des annonces...</p>
           </div>
         ) : listings.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center max-w-md mx-auto space-y-4 shadow-sm">
-            <div className="w-12 h-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
-              <Filter className="w-6 h-6" />
+          <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center max-w-lg mx-auto space-y-4 shadow-sm">
+            <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
+              <Filter className="w-7 h-7" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900">No listings found</h3>
-            <p className="text-xs text-slate-500">
-              Try adjusting your search criteria or clearing your filters to see all available caregivers and tutors.
+            <h3 className="text-lg font-bold text-slate-900">Aucune annonce publiée pour le moment</h3>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              La plateforme est prête à accueillir ses premières annonces de babysitting et de cours particuliers à Alger !
             </p>
-            <button
-              onClick={() => {
-                setSelectedCategory('all');
-                setSearchQuery('');
-                setLocationQuery('');
-              }}
-              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition"
-            >
-              Reset Filters
-            </button>
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                href="/provider/listing"
+                className="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center justify-center gap-1.5"
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span>Publier une annonce de service</span>
+              </Link>
+              {(searchQuery || selectedCommune !== 'all' || selectedCategory !== 'all') && (
+                <button
+                  onClick={() => {
+                    setSelectedCategory('all');
+                    setSelectedCommune('all');
+                    setSearchQuery('');
+                  }}
+                  className="w-full sm:w-auto px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition"
+                >
+                  Réinitialiser les filtres
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -208,76 +220,76 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Trust & Safety Banner */}
+        {/* Bannière de Confiance */}
         <TrustBanner />
 
-        {/* How It Works 3-Step Walkthrough */}
+        {/* Déroulement en 3 Étapes */}
         <div className="my-16 bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 shadow-sm">
           <div className="text-center max-w-2xl mx-auto mb-10">
             <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
-              Safe & Simple MVP Flow
+              Processus Sécurisé
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">
-              How CareMatch Works
+              Comment fonctionne TataWafa ?
             </h2>
             <p className="text-sm text-slate-500 mt-1">
-              A transparent, manual-coordination model built specifically for personal childcare and tutoring trust.
+              Un modèle transparent avec coordination humaine par téléphone pour garantir la sécurité des familles.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
             
-            {/* Step 1 */}
+            {/* Étape 1 */}
             <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 relative">
               <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white font-bold text-lg flex items-center justify-center mb-4 shadow-md shadow-indigo-200">
                 1
               </div>
-              <h3 className="font-bold text-slate-900 text-base mb-1.5">Request a Service</h3>
+              <h3 className="font-bold text-slate-900 text-base mb-1.5">Demande en Ligne</h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Choose a provider, pick your preferred date and time, and add a brief note. You’ll receive an instant in-app confirmation.
+                Choisissez votre prestataire selon la commune d'Alger, la date et vos horaires. Recevez une confirmation immédiate sur l'application.
               </p>
             </div>
 
-            {/* Step 2 */}
+            {/* Étape 2 */}
             <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 relative">
               <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white font-bold text-lg flex items-center justify-center mb-4 shadow-md shadow-indigo-200">
                 2
               </div>
-              <h3 className="font-bold text-slate-900 text-base mb-1.5">Admin Phone Coordination</h3>
+              <h3 className="font-bold text-slate-900 text-base mb-1.5">Coordination Téléphonique</h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Our site coordinator reviews the request and calls the provider and client by phone to verify details and confirm the match offline.
+                Notre coordinateur vous appelle et contacte également le prestataire pour valider le créneau horaire et les modalités pratiques.
               </p>
             </div>
 
-            {/* Step 3 */}
+            {/* Étape 3 */}
             <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 relative">
               <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white font-bold text-lg flex items-center justify-center mb-4 shadow-md shadow-indigo-200">
                 3
               </div>
-              <h3 className="font-bold text-slate-900 text-base mb-1.5">In-Person Care & Review</h3>
+              <h3 className="font-bold text-slate-900 text-base mb-1.5">Prestation & Vérification Directe</h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Babysitters present ID upon arrival. Payment is cash/in-person upon completion. Once finished, leave a verified review!
+                La vérification d'identité se fait en personne à votre domicile. Le règlement est versé en espèces (DA) directement au prestataire.
               </p>
             </div>
 
           </div>
         </div>
 
-        {/* Provider CTA */}
+        {/* Appel à l'action Prestataires */}
         <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-3xl p-8 sm:p-12 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-2 max-w-xl">
             <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Are you a Babysitter or Tutor?
+              Vous êtes Nounou ou Enseignant à Alger ?
             </h3>
             <p className="text-indigo-100 text-sm leading-relaxed">
-              Join our trusted local community. Set your own hourly rate, availability, and get connected with verified local families without paying online commission fees.
+              Rejoignez notre communauté locale. Fixez vos tarifs (DA / Séance ou Mois), votre commune d'intervention et travaillez avec des familles de confiance.
             </p>
           </div>
           <Link
             href="/provider/listing"
             className="px-6 py-3 bg-white text-indigo-700 hover:bg-indigo-50 font-bold rounded-xl text-sm shadow-md transition whitespace-nowrap"
           >
-            Create Your Provider Listing
+            Créer mon annonce de service
           </Link>
         </div>
 

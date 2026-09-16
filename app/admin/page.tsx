@@ -10,7 +10,7 @@ import {
 } from '@/types';
 import { DataStore } from '@/lib/store';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
-import { getStatusBadgeStyle, formatDate, formatPrice, getCategoryBadge } from '@/lib/utils';
+import { getStatusBadgeStyle, formatDate, formatPrice, getCategoryBadge, ADMIN_PHONE } from '@/lib/utils';
 import { 
   LayoutDashboard, 
   Users, 
@@ -30,8 +30,9 @@ import {
   Sparkles,
   Loader2,
   Trash2,
-  Plus,
-  Lock
+  Lock,
+  MapPin,
+  Coins
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
@@ -68,7 +69,6 @@ export default function AdminDashboardPage() {
       setProfiles(allProfiles);
       setListings(allListings);
 
-      // Keep selected request updated if open
       if (selectedRequest) {
         const refreshed = allRequests.find(r => r.id === selectedRequest.id);
         if (refreshed) setSelectedRequest(refreshed);
@@ -94,7 +94,7 @@ export default function AdminDashboardPage() {
             'postgres_changes',
             { event: '*', schema: 'public', table: 'requests' },
             (payload) => {
-              setRealtimeNotice(`Live Request Event: ${payload.eventType} at ${new Date().toLocaleTimeString()}`);
+              setRealtimeNotice(`Nouvelle mise à jour en direct (${payload.eventType}) à ${new Date().toLocaleTimeString('fr-FR')}`);
               loadAllData();
               setTimeout(() => setRealtimeNotice(null), 5000);
             }
@@ -141,16 +141,16 @@ export default function AdminDashboardPage() {
         <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
           <Lock className="w-8 h-8" />
         </div>
-        <h2 className="text-2xl font-extrabold text-slate-900">Admin Access Restricted</h2>
+        <h2 className="text-2xl font-extrabold text-slate-900">Accès Administrateur Restreint</h2>
         <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-          This dashboard contains private coordinator contact data (client and provider phone numbers). You must be signed in with an account having the <strong className="text-slate-900">admin</strong> role in Supabase.
+          Cet espace confidentiel contient les numéros de téléphone privés des familles et des prestataires. Vous devez être connecté avec un compte disposant du rôle <strong>admin</strong>.
         </p>
         <div>
           <Link
             href="/"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs sm:text-sm font-semibold hover:bg-indigo-700 shadow-md transition"
           >
-            Return to Marketplace
+            Retour à l'accueil
           </Link>
         </div>
       </div>
@@ -160,387 +160,481 @@ export default function AdminDashboardPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       
-      {/* Top Admin Header */}
+      {/* En-tête Espace Admin */}
       <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/30">
               <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-              Site Owner Hub • Manual Coordinator
+              Espace Administrateur • Coordination Manuelle à Alger
             </span>
             <span className="flex items-center gap-1 text-[11px] text-emerald-400 font-medium">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Live Realtime Feed
+              Flux en Direct
             </span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            Admin Coordination Dashboard
+            Tableau de Bord & Dispatch Téléphonique
           </h1>
           <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
-            Review incoming requests in real-time, coordinate offline with clients and providers by phone, and update dispatch status.
+            Consultez les demandes des familles en temps réel, coordonnez par téléphone avec les prestataires, vérifiez les pièces justificatives en main propre et mettez à jour les statuts.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={loadAllData}
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition flex items-center gap-1.5"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Refresh</span>
-          </button>
-        </div>
+        <button
+          onClick={loadAllData}
+          className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-2 transition"
+        >
+          <RefreshCw className="w-4 h-4" />
+          <span>Actualiser les données</span>
+        </button>
       </div>
 
-      {/* Realtime Notification Banner */}
+      {/* Notification d'événement en temps réel */}
       {realtimeNotice && (
-        <div className="p-3 bg-emerald-500/15 border border-emerald-500/30 text-emerald-800 text-xs font-semibold rounded-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-          <span>{realtimeNotice}</span>
+        <div className="p-4 rounded-2xl bg-indigo-900 text-white text-xs font-semibold flex items-center justify-between animate-in fade-in slide-in-from-top duration-300 shadow-md">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            <span>{realtimeNotice}</span>
+          </div>
+          <span className="text-[10px] text-indigo-300">Synchronisé</span>
         </div>
       )}
 
-      {/* Metrics Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl border border-amber-200 p-5 shadow-sm">
-          <span className="text-xs font-semibold text-amber-700 block">Pending Phone Coordination</span>
-          <div className="text-2xl sm:text-3xl font-extrabold text-amber-900 mt-1 flex items-center justify-between">
-            <span>{newRequestsCount}</span>
-            <Clock className="w-6 h-6 text-amber-400" />
+      {/* Compteurs de Synthèse */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <span className="text-xs font-semibold text-slate-500">Demandes Totales</span>
+            <div className="text-2xl font-black text-slate-900 mt-1">{requests.length}</div>
           </div>
-          <span className="text-[11px] text-amber-600 mt-1 block">New incoming requests</span>
+          <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600">
+            <LayoutDashboard className="w-5 h-5" />
+          </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-blue-200 p-5 shadow-sm">
-          <span className="text-xs font-semibold text-blue-700 block">In Progress / Coordinated</span>
-          <div className="text-2xl sm:text-3xl font-extrabold text-blue-900 mt-1 flex items-center justify-between">
-            <span>{inProgressCount}</span>
-            <PhoneCall className="w-6 h-6 text-blue-400" />
+        <div className="bg-white rounded-2xl p-5 border border-amber-200 shadow-sm flex items-center justify-between">
+          <div>
+            <span className="text-xs font-semibold text-amber-700">À Coordonner (Nouvelles)</span>
+            <div className="text-2xl font-black text-amber-600 mt-1">{newRequestsCount}</div>
           </div>
-          <span className="text-[11px] text-blue-600 mt-1 block">Scheduled visits</span>
+          <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+            <AlertCircle className="w-5 h-5" />
+          </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-emerald-200 p-5 shadow-sm">
-          <span className="text-xs font-semibold text-emerald-700 block">Completed Services</span>
-          <div className="text-2xl sm:text-3xl font-extrabold text-emerald-900 mt-1 flex items-center justify-between">
-            <span>{completedCount}</span>
-            <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+        <div className="bg-white rounded-2xl p-5 border border-blue-200 shadow-sm flex items-center justify-between">
+          <div>
+            <span className="text-xs font-semibold text-blue-700">En Coordination</span>
+            <div className="text-2xl font-black text-blue-600 mt-1">{inProgressCount}</div>
           </div>
-          <span className="text-[11px] text-emerald-600 mt-1 block">Review eligible</span>
+          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+            <Clock className="w-5 h-5" />
+          </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-          <span className="text-xs font-semibold text-slate-700 block">Total Active Users</span>
-          <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1 flex items-center justify-between">
-            <span>{profiles.length}</span>
-            <Users className="w-6 h-6 text-slate-400" />
+        <div className="bg-white rounded-2xl p-5 border border-emerald-200 shadow-sm flex items-center justify-between">
+          <div>
+            <span className="text-xs font-semibold text-emerald-700">Prestations Effectuées</span>
+            <div className="text-2xl font-black text-emerald-600 mt-1">{completedCount}</div>
           </div>
-          <span className="text-[11px] text-slate-500 mt-1 block">Clients & Providers</span>
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
         </div>
       </div>
 
-      {/* Primary Navigation Tabs */}
-      <div className="flex border-b border-slate-200">
+      {/* Onglets de Navigation Admin */}
+      <div className="flex border-b border-slate-200 gap-6">
         <button
           onClick={() => setActiveTab('requests')}
-          className={`px-5 py-3 text-xs sm:text-sm font-bold border-b-2 transition flex items-center gap-2 ${
+          className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 transition ${
             activeTab === 'requests'
               ? 'border-indigo-600 text-indigo-600'
-              : 'border-transparent text-slate-500 hover:text-slate-900'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          <LayoutDashboard className="w-4 h-4" />
-          <span>Incoming Requests ({requests.length})</span>
+          <PhoneCall className="w-4 h-4" />
+          <span>Flux des Demandes ({requests.length})</span>
           {newRequestsCount > 0 && (
-            <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-amber-500 text-white font-bold">
-              {newRequestsCount} new
+            <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-extrabold">
+              {newRequestsCount}
             </span>
           )}
         </button>
 
         <button
           onClick={() => setActiveTab('users')}
-          className={`px-5 py-3 text-xs sm:text-sm font-bold border-b-2 transition flex items-center gap-2 ${
+          className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 transition ${
             activeTab === 'users'
               ? 'border-indigo-600 text-indigo-600'
-              : 'border-transparent text-slate-500 hover:text-slate-900'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
           <Users className="w-4 h-4" />
-          <span>Users & Providers Directory ({profiles.length})</span>
+          <span>Annuaire Utilisateurs ({profiles.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('listings')}
-          className={`px-5 py-3 text-xs sm:text-sm font-bold border-b-2 transition flex items-center gap-2 ${
+          className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 transition ${
             activeTab === 'listings'
               ? 'border-indigo-600 text-indigo-600'
-              : 'border-transparent text-slate-500 hover:text-slate-900'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
           <BookOpen className="w-4 h-4" />
-          <span>Service Listings ({listings.length})</span>
+          <span>Annonces Publiées ({listings.length})</span>
         </button>
       </div>
 
-      {/* --------------------------------------------------------------------- */}
-      {/* TAB 1: REQUESTS REALTIME FEED & COORDINATION */}
-      {/* --------------------------------------------------------------------- */}
+      {/* CONTENU ONGLET 1: DEMANDES & COORDINATION */}
       {activeTab === 'requests' && (
-        <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* Status Filter Buttons */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
-            {[
-              { key: 'all', label: 'All Requests' },
-              { key: 'new', label: `New (${newRequestsCount})` },
-              { key: 'in_progress', label: `In Progress (${inProgressCount})` },
-              { key: 'completed', label: `Completed (${completedCount})` },
-              { key: 'cancelled', label: 'Cancelled' },
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setRequestStatusFilter(tab.key)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${
-                  requestStatusFilter === tab.key
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {loading ? (
-            <div className="py-20 text-center text-slate-400">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-600" />
-              <p className="text-sm font-medium mt-2">Loading requests feed...</p>
-            </div>
-          ) : filteredRequests.length === 0 ? (
-            <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center text-slate-500">
-              <Calendar className="w-8 h-8 mx-auto text-slate-300 mb-2" />
-              <p className="font-semibold text-sm">No requests match this filter.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredRequests.map((req) => {
-                const badge = getStatusBadgeStyle(req.status);
-                const client = req.client;
-                const provider = req.listing?.provider;
-
-                return (
-                  <div
-                    key={req.id}
-                    className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm hover:border-indigo-300 transition space-y-4"
+          {/* Liste des demandes */}
+          <div className="lg:col-span-7 space-y-4">
+            
+            <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1">
+              <span className="text-xs font-semibold text-slate-500">Filtrer par statut :</span>
+              <div className="flex gap-1.5">
+                {[
+                  { key: 'all', label: 'Toutes' },
+                  { key: 'new', label: 'Nouvelles' },
+                  { key: 'in_progress', label: 'En cours' },
+                  { key: 'completed', label: 'Terminées' },
+                  { key: 'cancelled', label: 'Annulées' },
+                ].map((s) => (
+                  <button
+                    key={s.key}
+                    onClick={() => setRequestStatusFilter(s.key)}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
+                      requestStatusFilter === s.key
+                        ? 'bg-slate-900 text-white'
+                        : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
                   >
-                    
-                    {/* Header line */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                      <div className="flex items-center gap-2.5">
-                        <span className={`px-3 py-0.5 rounded-full text-xs font-bold border ${badge.bg}`}>
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="py-20 text-center text-slate-400">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-600" />
+              </div>
+            ) : filteredRequests.length === 0 ? (
+              <div className="bg-white rounded-3xl border border-slate-200 p-10 text-center text-slate-400 space-y-2">
+                <p className="text-sm font-semibold text-slate-700">Aucune demande trouvée</p>
+                <p className="text-xs text-slate-400">Les nouvelles demandes de réservation apparaîtront ici dès leur envoi.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filteredRequests.map((req) => {
+                  const badge = getStatusBadgeStyle(req.status);
+                  const isSelected = selectedRequest?.id === req.id;
+                  const catBadge = req.listing ? getCategoryBadge(req.listing.category) : null;
+
+                  return (
+                    <div
+                      key={req.id}
+                      onClick={() => setSelectedRequest(req)}
+                      className={`cursor-pointer rounded-2xl p-4 sm:p-5 border transition-all ${
+                        isSelected
+                          ? 'bg-indigo-50/70 border-indigo-500 shadow-md ring-1 ring-indigo-500'
+                          : 'bg-white border-slate-200 hover:border-slate-300 shadow-sm'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${catBadge?.badgeClass}`}>
+                              {catBadge?.label}
+                            </span>
+                            <span className="text-[11px] text-slate-400">#{req.id.slice(-6)}</span>
+                          </div>
+
+                          <h3 className="font-bold text-slate-900 text-sm sm:text-base">
+                            {req.listing?.title || 'Annonce de service'}
+                          </h3>
+
+                          <div className="flex items-center gap-3 text-xs text-slate-600">
+                            <span>Famille : <strong className="text-slate-800">{req.client?.full_name || 'Client'}</strong></span>
+                            <span>•</span>
+                            <span>Prestataire : <strong className="text-slate-800">{req.listing?.provider?.full_name || 'Prestataire'}</strong></span>
+                          </div>
+                        </div>
+
+                        <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border ${badge.bg}`}>
                           {badge.label}
                         </span>
-                        <span className="text-xs font-mono text-slate-400">ID: {req.id}</span>
-                        <span className="text-xs text-slate-400">•</span>
-                        <span className="text-xs text-slate-500">Received {formatDate(req.created_at)}</span>
                       </div>
 
-                      {/* Status Transition Action Buttons */}
-                      <div className="flex items-center gap-2">
-                        {req.status === 'new' && (
-                          <button
-                            onClick={() => handleStatusChange(req.id, 'in_progress')}
-                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-sm transition flex items-center gap-1"
-                          >
-                            <PhoneCall className="w-3.5 h-3.5" />
-                            <span>Mark In Coordination</span>
-                          </button>
-                        )}
-
-                        {req.status === 'in_progress' && (
-                          <button
-                            onClick={() => handleStatusChange(req.id, 'completed')}
-                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition flex items-center gap-1"
-                          >
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>Mark Completed</span>
-                          </button>
-                        )}
-
-                        {req.status !== 'cancelled' && req.status !== 'completed' && (
-                          <button
-                            onClick={() => handleStatusChange(req.id, 'cancelled')}
-                            className="px-2.5 py-1.5 bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 text-xs font-semibold rounded-lg transition"
-                          >
-                            Cancel
-                          </button>
-                        )}
-
-                        {req.status === 'completed' && (
-                          <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
-                            Service Fulfilled
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Offline Phone Coordination Match Info Box */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs">
-                      
-                      {/* Client Info for calling */}
-                      <div className="space-y-1">
-                        <span className="font-bold text-indigo-900 uppercase tracking-wider block">
-                          1. Client Contact (Call First)
+                      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                        <span className="flex items-center gap-1 font-medium text-slate-700">
+                          <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                          {formatDate(req.requested_datetime)}
                         </span>
-                        <p className="font-bold text-sm text-slate-900">{client?.full_name || 'Client'}</p>
-                        <p className="text-slate-600 flex items-center gap-1 font-mono">
-                          <PhoneCall className="w-3.5 h-3.5 text-indigo-600" />
-                          <strong className="text-indigo-700">{client?.phone || 'No phone'}</strong>
-                        </p>
-                        <p className="text-slate-500">Location: {client?.location || req.listing?.location || 'Local'}</p>
-                      </div>
-
-                      {/* Provider Info for calling */}
-                      <div className="space-y-1">
-                        <span className="font-bold text-indigo-900 uppercase tracking-wider block">
-                          2. Provider Contact (Call Second)
+                        <span className="flex items-center gap-1 text-indigo-600 font-semibold">
+                          <span>Gérer la coordination</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
                         </span>
-                        <p className="font-bold text-sm text-slate-900">{provider?.full_name || 'Provider'}</p>
-                        <p className="text-slate-600 flex items-center gap-1 font-mono">
-                          <PhoneCall className="w-3.5 h-3.5 text-indigo-600" />
-                          <strong className="text-indigo-700">{provider?.phone || 'No phone'}</strong>
-                        </p>
-                        <p className="text-slate-500">Service: {req.listing?.title} ({formatPrice(req.listing?.price || 0)}/hr)</p>
                       </div>
-
                     </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
-                    {/* Schedule & Notes */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-indigo-600" />
-                        <span className="font-semibold text-slate-700">Requested Schedule:</span>
-                        <span className="font-bold text-slate-900">{formatDate(req.requested_datetime)}</span>
-                      </div>
-
-                      {req.note && (
-                        <div className="text-slate-600 bg-white border border-slate-200 px-3 py-1.5 rounded-lg max-w-lg">
-                          <span className="font-bold text-slate-700">Client Note: </span>
-                          "{req.note}"
-                        </div>
-                      )}
-                    </div>
-
+          {/* Panneau de coordination sélectionnée */}
+          <div className="lg:col-span-5">
+            {selectedRequest ? (
+              <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-soft space-y-6 sticky top-24">
+                
+                <div className="flex items-start justify-between border-b border-slate-100 pb-4">
+                  <div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-indigo-600">
+                      Détail de la Coordination
+                    </span>
+                    <h3 className="text-lg font-bold text-slate-900 mt-0.5">
+                      Demande #{selectedRequest.id.slice(-6)}
+                    </h3>
                   </div>
-                );
-              })}
-            </div>
-          )}
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${getStatusBadgeStyle(selectedRequest.status).bg}`}>
+                    {getStatusBadgeStyle(selectedRequest.status).label}
+                  </span>
+                </div>
+
+                {/* Bloc Coordonnées Téléphoniques */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                    Contacts Téléphoniques Directs
+                  </h4>
+
+                  {/* Téléphone Client */}
+                  <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 flex items-center justify-between">
+                    <div>
+                      <span className="text-[11px] font-semibold text-indigo-900 block">Famille (Client)</span>
+                      <strong className="text-sm text-slate-900">{selectedRequest.client?.full_name || 'Client'}</strong>
+                      <p className="text-xs font-bold text-indigo-700 mt-0.5 flex items-center gap-1">
+                        <PhoneCall className="w-3.5 h-3.5" />
+                        {selectedRequest.client?.phone || 'Numéro non renseigné'}
+                      </p>
+                    </div>
+                    {selectedRequest.client?.phone && (
+                      <a
+                        href={`tel:${selectedRequest.client.phone}`}
+                        className="px-3.5 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition"
+                      >
+                        Appeler
+                      </a>
+                    )}
+                  </div>
+
+                  {/* Téléphone Prestataire */}
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center justify-between">
+                    <div>
+                      <span className="text-[11px] font-semibold text-emerald-900 block">Prestataire (Nounou/Prof)</span>
+                      <strong className="text-sm text-slate-900">{selectedRequest.listing?.provider?.full_name || 'Prestataire'}</strong>
+                      <p className="text-xs font-bold text-emerald-700 mt-0.5 flex items-center gap-1">
+                        <PhoneCall className="w-3.5 h-3.5" />
+                        {selectedRequest.listing?.provider?.phone || 'Numéro non renseigné'}
+                      </p>
+                    </div>
+                    {selectedRequest.listing?.provider?.phone && (
+                      <a
+                        href={`tel:${selectedRequest.listing.provider.phone}`}
+                        className="px-3.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition"
+                      >
+                        Appeler
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                {/* Précisions de la demande */}
+                <div className="space-y-2 text-xs">
+                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-1">
+                    <span className="text-slate-400 font-medium">Date & Heure : </span>
+                    <span className="font-bold text-slate-800">{formatDate(selectedRequest.requested_datetime)}</span>
+                  </div>
+
+                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-1">
+                    <span className="text-slate-400 font-medium">Lieu (Commune) : </span>
+                    <span className="font-bold text-slate-800">{selectedRequest.listing?.location || 'Alger'}</span>
+                  </div>
+
+                  {selectedRequest.note && (
+                    <div className="bg-amber-50 p-3.5 rounded-xl border border-amber-200 text-amber-950">
+                      <span className="font-bold block mb-0.5">Note du client :</span>
+                      <p>{selectedRequest.note}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions de changement de statut */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                    Mise à jour du statut
+                  </h4>
+                  
+                  <div className="grid grid-cols-1 gap-2">
+                    <button
+                      onClick={() => handleStatusChange(selectedRequest.id, 'in_progress')}
+                      disabled={selectedRequest.status === 'in_progress'}
+                      className="w-full py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white text-xs font-bold transition flex items-center justify-center gap-1.5"
+                    >
+                      <Clock className="w-4 h-4" />
+                      <span>1. Marquer En Cours de Coordination</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleStatusChange(selectedRequest.id, 'completed')}
+                      disabled={selectedRequest.status === 'completed'}
+                      className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white text-xs font-bold transition flex items-center justify-center gap-1.5"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>2. Marquer comme Prestation Effectuée</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleStatusChange(selectedRequest.id, 'cancelled')}
+                      disabled={selectedRequest.status === 'cancelled'}
+                      className="w-full py-2 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 disabled:opacity-40 text-xs font-semibold transition border border-rose-200 flex items-center justify-center gap-1.5"
+                    >
+                      <XCircle className="w-4 h-4" />
+                      <span>Annuler la demande</span>
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            ) : (
+              <div className="bg-slate-50 rounded-3xl border border-dashed border-slate-300 p-12 text-center text-slate-400 space-y-2">
+                <PhoneCall className="w-8 h-8 mx-auto text-slate-300" />
+                <p className="text-xs font-semibold text-slate-600">Sélectionnez une demande dans la liste pour afficher les numéros de téléphone et coordonner la mission.</p>
+              </div>
+            )}
+          </div>
 
         </div>
       )}
 
-      {/* --------------------------------------------------------------------- */}
-      {/* TAB 2: USERS & PROVIDERS DIRECTORY */}
-      {/* --------------------------------------------------------------------- */}
+      {/* CONTENU ONGLET 2: ANNUAIRE DES UTILISATEURS */}
       {activeTab === 'users' && (
-        <div className="space-y-6">
-          
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Annuaire des Familles & Prestataires</h2>
+              <p className="text-xs text-slate-500">Liste des profils inscrits sur la plateforme.</p>
+            </div>
+
+            <div className="flex gap-2">
               {['all', 'client', 'provider', 'admin'].map((r) => (
                 <button
                   key={r}
                   onClick={() => setUserRoleFilter(r)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition capitalize ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition ${
                     userRoleFilter === r
                       ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
-                  {r === 'all' ? 'All Roles' : `${r}s`}
+                  {r === 'all' ? 'Tous' : r === 'provider' ? 'Prestataires' : r === 'client' ? 'Clients' : 'Admins'}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-600">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
-                  <tr>
-                    <th className="py-3.5 px-4">User / Persona</th>
-                    <th className="py-3.5 px-4">Role</th>
-                    <th className="py-3.5 px-4">Phone Number</th>
-                    <th className="py-3.5 px-4">Location</th>
-                    <th className="py-3.5 px-4">Registered Date</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {filteredProfiles.map((p) => (
-                    <tr key={p.id} className="hover:bg-slate-50/80 transition">
-                      <td className="py-3.5 px-4 font-bold text-slate-900 flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden">
-                          {p.avatar_url ? (
-                            <img src={p.avatar_url} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <span>{p.full_name.charAt(0)}</span>
-                          )}
-                        </div>
-                        <div>
-                          <p className="leading-tight">{p.full_name}</p>
-                          <p className="text-[10px] text-slate-400 font-mono">{p.id}</p>
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className={`capitalize px-2 py-0.5 rounded text-[11px] font-bold border ${
-                          p.role === 'admin'
-                            ? 'bg-amber-50 text-amber-800 border-amber-200'
-                            : p.role === 'provider'
-                            ? 'bg-indigo-50 text-indigo-800 border-indigo-200'
-                            : 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                        }`}>
-                          {p.role}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 font-mono font-medium text-slate-800">{p.phone || 'N/A'}</td>
-                      <td className="py-3.5 px-4">{p.location || 'Local'}</td>
-                      <td className="py-3.5 px-4 text-slate-400">{formatDate(p.created_at)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {filteredProfiles.length === 0 ? (
+            <div className="py-12 text-center text-slate-400">
+              <p className="text-sm">Aucun utilisateur inscrit pour le moment.</p>
             </div>
-          </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {filteredProfiles.map((p) => (
+                <div key={p.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-slate-100 border flex items-center justify-center font-bold text-slate-700 text-sm">
+                      {p.full_name?.charAt(0) || 'U'}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-sm text-slate-900">{p.full_name}</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded capitalize ${
+                          p.role === 'admin'
+                            ? 'bg-amber-100 text-amber-800'
+                            : p.role === 'provider'
+                            ? 'bg-indigo-100 text-indigo-800'
+                            : 'bg-emerald-100 text-emerald-800'
+                        }`}>
+                          {p.role === 'provider' ? 'Prestataire' : p.role}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {p.phone || 'Pas de numéro'} • {p.location || 'Alger'}
+                      </p>
+                    </div>
+                  </div>
 
+                  <div className="flex items-center gap-2">
+                    {p.phone && (
+                      <a
+                        href={`tel:${p.phone}`}
+                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg flex items-center gap-1"
+                      >
+                        <PhoneCall className="w-3.5 h-3.5" />
+                        <span>Appeler</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {/* --------------------------------------------------------------------- */}
-      {/* TAB 3: SERVICE LISTINGS MANAGEMENT */}
-      {/* --------------------------------------------------------------------- */}
+      {/* CONTENU ONGLET 3: GESTION DES ANNONCES */}
       {activeTab === 'listings' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {listings.map((l) => (
-              <div key={l.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 uppercase">
-                    {l.category}
-                  </span>
-                  <span className="font-extrabold text-slate-900 text-sm">{formatPrice(l.price)}/hr</span>
-                </div>
-                <h3 className="font-bold text-slate-900 text-sm leading-snug">{l.title}</h3>
-                <p className="text-xs text-slate-500 line-clamp-2">{l.description}</p>
-                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
-                  <span>Provider: <strong>{l.provider?.full_name || 'Provider'}</strong></span>
-                  <span className="text-slate-400">{l.location}</span>
-                </div>
-              </div>
-            ))}
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="border-b border-slate-100 pb-4">
+            <h2 className="text-lg font-bold text-slate-900">Toutes les Annonces de Service</h2>
+            <p className="text-xs text-slate-500">Supervisez les tarifs et prestations proposées à Alger.</p>
           </div>
+
+          {listings.length === 0 ? (
+            <div className="py-12 text-center text-slate-400 space-y-2">
+              <p className="text-sm">Aucune annonce publiée pour le moment.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {listings.map((l) => (
+                <div key={l.id} className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">
+                      {l.category === 'babysitting' ? 'Garde d\'enfants' : 'Soutien scolaire'}
+                    </span>
+                    <strong className="text-xs font-bold text-slate-900">{formatPrice(l.price, l.price_unit || 'séance')}</strong>
+                  </div>
+                  <h4 className="font-bold text-sm text-slate-900 line-clamp-1">{l.title}</h4>
+                  <p className="text-xs text-slate-500 line-clamp-2">{l.description}</p>
+                  <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs">
+                    <span className="text-slate-600 font-medium">{l.location} (Alger)</span>
+                    <Link
+                      href={`/services/${l.id}`}
+                      className="text-indigo-600 font-semibold hover:underline"
+                    >
+                      Consulter →
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

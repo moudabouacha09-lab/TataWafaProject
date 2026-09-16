@@ -1,25 +1,28 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { format, parseISO } from 'date-fns';
-import { RequestStatus, ServiceCategory } from '@/types';
+import { fr } from 'date-fns/locale';
+import { RequestStatus, ServiceCategory, PriceUnit } from '@/types';
+
+export const ADMIN_PHONE = "0550 12 34 56";
+export const ADMIN_EMAIL = "admin.tatawafa@gmail.com";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatPrice(price: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
+export function formatPrice(price: number, unit: PriceUnit = 'séance'): string {
+  const formattedNumber = new Intl.NumberFormat('fr-DZ', {
     maximumFractionDigits: 0,
   }).format(price);
+
+  return `${formattedNumber} DA / ${unit}`;
 }
 
 export function formatDate(dateString?: string | null): string {
   if (!dateString) return 'N/A';
   try {
-    return format(parseISO(dateString), 'MMM d, yyyy h:mm a');
+    return format(parseISO(dateString), "d MMMM yyyy 'à' HH:mm", { locale: fr });
   } catch (err) {
     return dateString;
   }
@@ -28,7 +31,7 @@ export function formatDate(dateString?: string | null): string {
 export function formatDateShort(dateString?: string | null): string {
   if (!dateString) return 'N/A';
   try {
-    return format(parseISO(dateString), 'MMM d, yyyy');
+    return format(parseISO(dateString), 'd MMM yyyy', { locale: fr });
   } catch (err) {
     return dateString;
   }
@@ -40,25 +43,25 @@ export function getStatusBadgeStyle(status: RequestStatus): { bg: string; text: 
       return {
         bg: 'bg-amber-100 text-amber-800 border-amber-300',
         text: 'text-amber-700',
-        label: 'New Request',
+        label: 'Nouvelle demande',
       };
     case 'in_progress':
       return {
         bg: 'bg-blue-100 text-blue-800 border-blue-300',
         text: 'text-blue-700',
-        label: 'In Coordination',
+        label: 'En cours de coordination',
       };
     case 'completed':
       return {
         bg: 'bg-emerald-100 text-emerald-800 border-emerald-300',
         text: 'text-emerald-700',
-        label: 'Completed',
+        label: 'Service effectué',
       };
     case 'cancelled':
       return {
         bg: 'bg-rose-100 text-rose-800 border-rose-300',
         text: 'text-rose-700',
-        label: 'Cancelled',
+        label: 'Annulée',
       };
     default:
       return {
@@ -72,13 +75,13 @@ export function getStatusBadgeStyle(status: RequestStatus): { bg: string; text: 
 export function getCategoryBadge(category: ServiceCategory) {
   if (category === 'babysitting') {
     return {
-      label: 'Babysitting',
+      label: 'Garde d\'enfants (Babysitting)',
       badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200',
       icon: 'Baby',
     };
   }
   return {
-    label: 'Teaching & Tutoring',
+    label: 'Cours & Soutien scolaire',
     badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     icon: 'GraduationCap',
   };

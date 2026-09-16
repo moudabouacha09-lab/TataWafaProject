@@ -7,13 +7,13 @@ export const TrustBanner: React.FC = () => {
       <div className="max-w-3xl mb-6">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-semibold mb-3 border border-emerald-500/30">
           <ShieldCheck className="w-4 h-4 text-emerald-400" />
-          <span>Trust-First & Manual Coordination MVP</span>
+          <span>Sécurité & Coordination Manuelle à Alger</span>
         </div>
         <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-          Safe, Personal Childcare & Teaching Support
+          Garde d'enfants & Soutien scolaire en toute confiance
         </h2>
         <p className="text-sm sm:text-base text-slate-300 mt-2 leading-relaxed">
-          We prioritize child safety and trust above all. Our site coordinator directly verifies each request by phone with both parents and providers before any service begins.
+          Pour la sécurité des enfants et des familles, chaque mise en relation est coordonnée par téléphone, et la vérification des identités et des compétences s'effectue en main propre dans la vie réelle.
         </p>
       </div>
 
@@ -23,9 +23,9 @@ export const TrustBanner: React.FC = () => {
             <PhoneCall className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="text-sm font-semibold text-white">1. Direct Phone Coordination</h4>
+            <h4 className="text-sm font-semibold text-white">1. Coordination Téléphonique</h4>
             <p className="text-xs text-slate-300 mt-0.5">
-              When you submit a request, our admin calls both parties to confirm schedules and expectations.
+              Dès qu'une demande est envoyée, l'administrateur vous appelle pour caler le créneau et les attentes.
             </p>
           </div>
         </div>
@@ -35,9 +35,9 @@ export const TrustBanner: React.FC = () => {
             <UserCheck2 className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="text-sm font-semibold text-white">2. In-Person ID Verification</h4>
+            <h4 className="text-sm font-semibold text-white">2. Vérification en Main Propre</h4>
             <p className="text-xs text-slate-300 mt-0.5">
-              For babysitting, official identification is reviewed face-to-face upon arrival at your doorstep.
+              Aucun document d'identité n'est stocké sur le web. Les pièces d'identité et attestations sont vérifiées en personne.
             </p>
           </div>
         </div>
@@ -47,9 +47,9 @@ export const TrustBanner: React.FC = () => {
             <HandCoins className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="text-sm font-semibold text-white">3. Direct Cash / In-Person Pay</h4>
+            <h4 className="text-sm font-semibold text-white">3. Paiement Direct en Espèces (DA)</h4>
             <p className="text-xs text-slate-300 mt-0.5">
-              No online card processing fees. You pay the provider directly upon completion of the service.
+              Zéro commission bancaire en ligne. Vous réglez directement le prestataire en dinars à la séance ou au mois.
             </p>
           </div>
         </div>

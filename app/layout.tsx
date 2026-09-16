@@ -6,8 +6,8 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 
 export const metadata: Metadata = {
-  title: 'CareMatch — Trusted Babysitting & Teaching Services',
-  description: 'A trust-first service marketplace with manual phone coordination and verified local providers.',
+  title: 'TataWafa — Services de Garde d\'Enfants & Soutien Scolaire à Alger',
+  description: 'Plateforme de confiance pour trouver des babysitters, nounous et enseignants à Alger. Coordination téléphonique et vérification des pièces en main propre.',
 };
 
 export default function RootLayout({
@@ -16,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full">
+    <html lang="fr" className="h-full">
       <body className="flex min-h-full flex-col bg-slate-50 text-slate-900 antialiased selection:bg-indigo-500 selection:text-white">
         <AuthProvider>
           <RoleSwitcher />

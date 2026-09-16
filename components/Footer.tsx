@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
-import { HeartHandshake, Shield, Sparkles } from 'lucide-react';
+import { HeartHandshake, Shield, PhoneCall } from 'lucide-react';
+import { ADMIN_PHONE } from '@/lib/utils';
 
 export const Footer: React.FC = () => {
   return (
@@ -13,54 +14,54 @@ export const Footer: React.FC = () => {
               <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
                 <HeartHandshake className="w-4 h-4" />
               </div>
-              <span className="font-bold text-slate-900 text-base">CareMatch Services</span>
+              <span className="font-bold text-slate-900 text-base">TataWafa</span>
             </div>
             <p className="text-slate-500 text-xs max-w-sm leading-relaxed">
-              A curated, two-sided marketplace connecting caring local families with verified babysitters and passionate academic tutors.
+              Plateforme locale de confiance reliant les familles d'Alger avec des gardes d'enfants et des enseignants particuliers vérifiés en main propre.
             </p>
-            <div className="flex items-center gap-2 text-xs text-slate-500 pt-1">
-              <Shield className="w-4 h-4 text-emerald-600" />
-              <span>Offline phone coordination & face-to-face trust guarantee.</span>
+            <div className="flex items-center gap-2 text-xs text-indigo-800 font-semibold pt-1">
+              <PhoneCall className="w-4 h-4 text-indigo-600" />
+              <span>Contact Administratif & Coordination : {ADMIN_PHONE}</span>
             </div>
           </div>
 
           <div>
-            <h4 className="font-semibold text-slate-900 text-xs uppercase tracking-wider mb-3">Explore Categories</h4>
+            <h4 className="font-semibold text-slate-900 text-xs uppercase tracking-wider mb-3">Catégories de Services</h4>
             <ul className="space-y-2 text-xs">
               <li>
                 <Link href="/?category=babysitting" className="hover:text-indigo-600 transition">
-                  Babysitting & Childcare
+                  Garde d'enfants & Nounous
                 </Link>
               </li>
               <li>
                 <Link href="/?category=teaching" className="hover:text-indigo-600 transition">
-                  Teaching & Math/Language Tutoring
+                  Cours particuliers & Soutien scolaire
                 </Link>
               </li>
               <li>
                 <Link href="/" className="hover:text-indigo-600 transition">
-                  All Verified Listings
+                  Toutes les annonces d'Alger
                 </Link>
               </li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-semibold text-slate-900 text-xs uppercase tracking-wider mb-3">Platform Operations</h4>
+            <h4 className="font-semibold text-slate-900 text-xs uppercase tracking-wider mb-3">Espaces Membres</h4>
             <ul className="space-y-2 text-xs">
               <li>
                 <Link href="/my-requests" className="hover:text-indigo-600 transition">
-                  Track Service Request
+                  Suivi de mes demandes
                 </Link>
               </li>
               <li>
                 <Link href="/provider/listing" className="hover:text-indigo-600 transition">
-                  Become a Care / Tutor Provider
+                  Devenir Prestataire / Nounou
                 </Link>
               </li>
               <li>
                 <Link href="/admin" className="hover:text-indigo-600 text-amber-700 font-medium transition">
-                  Admin Coordinator Hub
+                  Espace Coordinateur Admin
                 </Link>
               </li>
             </ul>
@@ -69,13 +70,13 @@ export const Footer: React.FC = () => {
         </div>
 
         <div className="border-t border-slate-100 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-3">
-          <p>© {new Date().getFullYear()} CareMatch MVP. Dedicated to trusted neighborhood care.</p>
+          <p>© {new Date().getFullYear()} TataWafa. Tous droits réservés • Alger, Algérie.</p>
           <div className="flex items-center gap-4">
             <span>Babysitting</span>
             <span>•</span>
-            <span>Teaching</span>
+            <span>Soutien scolaire</span>
             <span>•</span>
-            <span>Manual Coordination</span>
+            <span>Coordination en direct</span>
           </div>
         </div>
       </div>
