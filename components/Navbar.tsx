@@ -12,7 +12,12 @@ import {
   Menu, 
   X, 
   LayoutDashboard, 
-  HeartHandshake
+  HeartHandshake,
+  ShieldCheck,
+  HelpCircle,
+  MapPin,
+  PlusCircle,
+  FileCheck2
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -20,14 +25,14 @@ export const Navbar: React.FC = () => {
   const { role, profile, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const isActive = (path: string) => pathname === path;
+  const isActive = (path: string) => pathname === path || pathname.startsWith(`${path}/`);
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           
-          {/* Logo & Platform Name */}
+          {/* Logo & Slogan */}
           <Link href="/" className="flex items-center gap-2.5 group">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-indigo-200 group-hover:scale-105 transition">
               <HeartHandshake className="w-5 h-5" />
@@ -36,33 +41,67 @@ export const Navbar: React.FC = () => {
               <div className="font-bold text-lg leading-tight text-slate-900 tracking-tight flex items-center gap-1.5">
                 TataWafa
                 <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
-                  Alger & Environs
+                  Alger
                 </span>
               </div>
-              <p className="text-xs text-slate-500 font-normal">Garde d'enfants & Cours Particuliers</p>
+              <p className="text-[11px] text-slate-500 font-normal">Garde d'enfants & Soutien scolaire</p>
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
+          {/* Navigation Principale Desktop */}
+          <nav className="hidden lg:flex items-center gap-1 text-xs sm:text-sm font-medium">
             <Link
-              href="/"
-              className={`px-3.5 py-2 rounded-lg text-sm font-medium transition ${
-                isActive('/') || isActive('/services')
-                  ? 'text-indigo-600 bg-indigo-50 font-semibold'
+              href="/services"
+              className={`px-3 py-2 rounded-lg transition ${
+                isActive('/services')
+                  ? 'text-indigo-600 bg-indigo-50 font-bold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              Explorer les services
+              Services
             </Link>
 
-            {/* Client Links */}
+            <Link
+              href="/comment-ca-marche"
+              className={`px-3 py-2 rounded-lg transition ${
+                isActive('/comment-ca-marche')
+                  ? 'text-indigo-600 bg-indigo-50 font-bold'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }`}
+            >
+              Comment ça marche
+            </Link>
+
+            <Link
+              href="/securite-et-confiance"
+              className={`px-3 py-2 rounded-lg transition flex items-center gap-1 ${
+                isActive('/securite-et-confiance')
+                  ? 'text-emerald-700 bg-emerald-50 font-bold'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span>Sécurité</span>
+            </Link>
+
+            <Link
+              href="/tarifs-et-communes"
+              className={`px-3 py-2 rounded-lg transition ${
+                isActive('/tarifs-et-communes')
+                  ? 'text-indigo-600 bg-indigo-50 font-bold'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }`}
+            >
+              Communes & Tarifs
+            </Link>
+
+            {/* Liens Famille / Client */}
             {role === 'client' && (
               <Link
-                href="/my-requests"
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition ${
-                  isActive('/my-requests')
-                    ? 'text-indigo-600 bg-indigo-50 font-semibold'
+                href="/client/demandes"
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition ${
+                  isActive('/client/demandes')
+                    ? 'text-indigo-600 bg-indigo-50 font-bold'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
@@ -71,69 +110,72 @@ export const Navbar: React.FC = () => {
               </Link>
             )}
 
-            {/* Provider Links */}
+            {/* Liens Prestataire */}
             {role === 'provider' && (
               <>
                 <Link
-                  href="/provider/listing"
-                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition ${
-                    isActive('/provider/listing')
-                      ? 'text-indigo-600 bg-indigo-50 font-semibold'
+                  href="/provider/dashboard"
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition ${
+                    isActive('/provider/dashboard')
+                      ? 'text-indigo-600 bg-indigo-50 font-bold'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   }`}
                 >
-                  <BookOpen className="w-4 h-4" />
-                  <span>Mon annonce de service</span>
+                  <LayoutDashboard className="w-4 h-4" />
+                  <span>Mon Espace</span>
                 </Link>
                 <Link
-                  href="/provider/profile"
-                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition ${
-                    isActive('/provider/profile')
-                      ? 'text-indigo-600 bg-indigo-50 font-semibold'
+                  href="/provider/verification"
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition ${
+                    isActive('/provider/verification')
+                      ? 'text-amber-700 bg-amber-50 font-bold'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   }`}
                 >
-                  <User className="w-4 h-4" />
-                  <span>Mon profil & Avis</span>
+                  <FileCheck2 className="w-4 h-4 text-amber-600" />
+                  <span>Vérification physique</span>
                 </Link>
               </>
             )}
 
-            {/* Admin Links */}
+            {/* Liens Admin */}
             {role === 'admin' && (
               <Link
                 href="/admin"
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold transition ${
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg transition font-bold ${
                   isActive('/admin')
-                    ? 'text-amber-700 bg-amber-50 font-bold border border-amber-200'
-                    : 'text-amber-700 bg-amber-50/60 hover:bg-amber-100 hover:text-amber-900 border border-amber-200/60'
+                    ? 'text-amber-800 bg-amber-100 border border-amber-300'
+                    : 'text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200'
                 }`}
               >
                 <LayoutDashboard className="w-4 h-4 text-amber-600" />
-                <span>Espace Coordinateur Admin</span>
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping ml-1" />
+                <span>Espace Coordinateur</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse ml-1" />
               </Link>
             )}
           </nav>
 
-          {/* User Status / Account Dropdown */}
-          <div className="hidden md:flex items-center gap-3">
+          {/* Action Droite & Profil */}
+          <div className="hidden lg:flex items-center gap-3">
+            {role !== 'provider' && role !== 'admin' && (
+              <Link
+                href="/devenir-prestataire"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl transition"
+              >
+                <PlusCircle className="w-3.5 h-3.5" />
+                <span>Devenir Prestataire</span>
+              </Link>
+            )}
+
             {profile ? (
               <div className="flex items-center gap-3 pl-3 border-l border-slate-200">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center font-bold text-slate-700 text-sm">
-                    {profile.avatar_url ? (
-                      <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" />
-                    ) : (
-                      <span>{profile.full_name.charAt(0)}</span>
-                    )}
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-xs">
+                    {profile.full_name?.charAt(0) || 'U'}
                   </div>
-                  <div className="text-left">
-                    <p className="text-xs font-semibold text-slate-800 leading-tight truncate max-w-[140px]">
-                      {profile.full_name}
-                    </p>
-                    <span className="text-[10px] text-slate-500 capitalize flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <div className="text-left text-xs">
+                    <p className="font-bold text-slate-900 leading-tight max-w-[120px] truncate">{profile.full_name}</p>
+                    <span className="text-[10px] text-slate-500 capitalize">
                       {role === 'provider' ? 'Prestataire' : role === 'admin' ? 'Admin' : 'Famille'}
                     </span>
                   </div>
@@ -151,13 +193,13 @@ export const Navbar: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Link
                   href="/auth/login"
-                  className="px-3.5 py-1.5 text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition"
+                  className="px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-lg transition"
                 >
                   Connexion
                 </Link>
                 <Link
                   href="/auth/signup"
-                  className="px-4 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition"
+                  className="px-3.5 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition"
                 >
                   Créer un compte
                 </Link>
@@ -165,8 +207,8 @@ export const Navbar: React.FC = () => {
             )}
           </div>
 
-          {/* Mobile menu toggle */}
-          <div className="flex md:hidden items-center gap-2">
+          {/* Bouton Menu Mobile */}
+          <div className="flex lg:hidden items-center gap-2">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100"
@@ -174,61 +216,77 @@ export const Navbar: React.FC = () => {
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
+
         </div>
       </div>
 
-      {/* Mobile navigation panel */}
+      {/* Menu Mobile */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-6 space-y-2 shadow-lg">
-          {profile && (
-            <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl mb-3 border border-slate-200">
-              <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center font-bold text-slate-700">
-                {profile.avatar_url ? (
-                  <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" />
-                ) : (
-                  <span>{profile.full_name.charAt(0)}</span>
-                )}
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-900">{profile.full_name}</p>
-                <p className="text-xs text-slate-500 capitalize">{role === 'provider' ? 'Prestataire' : role}</p>
-              </div>
-            </div>
-          )}
-
+        <div className="lg:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-6 space-y-2 shadow-lg animate-in slide-in-from-top-2 duration-200">
           <Link
-            href="/"
+            href="/services"
             onClick={() => setMobileMenuOpen(false)}
             className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100"
           >
             Explorer les services
           </Link>
 
+          <Link
+            href="/comment-ca-marche"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100"
+          >
+            Comment ça marche
+          </Link>
+
+          <Link
+            href="/securite-et-confiance"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100"
+          >
+            Sécurité & Vérification en main propre
+          </Link>
+
+          <Link
+            href="/tarifs-et-communes"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100"
+          >
+            Tarifs & 57 Communes d'Alger
+          </Link>
+
           {role === 'client' && (
             <Link
-              href="/my-requests"
+              href="/client/demandes"
               onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100"
+              className="block px-3 py-2 rounded-lg text-sm font-semibold text-indigo-600 bg-indigo-50"
             >
-              Mes demandes de service
+              Mes demandes de réservation
             </Link>
           )}
 
           {role === 'provider' && (
             <>
               <Link
-                href="/provider/listing"
+                href="/provider/dashboard"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-sm font-semibold text-indigo-600 bg-indigo-50"
+              >
+                Mon Tableau de Bord Prestataire
+              </Link>
+              <Link
+                href="/provider/annonces"
                 onClick={() => setMobileMenuOpen(false)}
                 className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100"
               >
                 Gérer mon annonce
               </Link>
               <Link
-                href="/provider/profile"
+                href="/provider/verification"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100"
+                className="block px-3 py-2 rounded-lg text-sm font-medium text-amber-800 bg-amber-50"
               >
-                Voir mes avis & profil
+                Vérification physique en main propre
               </Link>
             </>
           )}
@@ -237,7 +295,7 @@ export const Navbar: React.FC = () => {
             <Link
               href="/admin"
               onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 rounded-lg text-sm font-medium text-amber-800 bg-amber-50 border border-amber-200"
+              className="block px-3 py-2 rounded-lg text-sm font-bold text-amber-900 bg-amber-100"
             >
               Espace Coordinateur Admin
             </Link>
@@ -255,18 +313,18 @@ export const Navbar: React.FC = () => {
                 Se déconnecter
               </button>
             ) : (
-              <div className="grid grid-cols-2 gap-2 pt-2">
+              <div className="grid grid-cols-2 gap-2 pt-1">
                 <Link
                   href="/auth/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-center px-4 py-2 text-sm font-medium border border-slate-300 rounded-lg text-slate-700"
+                  className="text-center px-4 py-2 text-xs font-semibold border border-slate-300 rounded-lg text-slate-700"
                 >
                   Connexion
                 </Link>
                 <Link
                   href="/auth/signup"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-center px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg"
+                  className="text-center px-4 py-2 text-xs font-semibold bg-indigo-600 text-white rounded-lg"
                 >
                   Inscription
                 </Link>

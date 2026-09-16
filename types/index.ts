@@ -6,6 +6,12 @@ export type RequestStatus = 'new' | 'in_progress' | 'completed' | 'cancelled';
 
 export type PriceUnit = 'séance' | 'mois' | 'heure';
 
+export type VerificationStatus = 
+  | 'non_verifie' 
+  | 'en_attente_physique' 
+  | 'verifie_en_main_propre' 
+  | 'suspendu';
+
 export interface Profile {
   id: string;
   role: UserRole;
@@ -15,6 +21,12 @@ export interface Profile {
   avatar_url?: string | null;
   bio?: string | null;
   created_at?: string;
+  // Attributs de confiance et vérification physique
+  verification_status?: VerificationStatus;
+  id_card_verified?: boolean;
+  diploma_verified?: boolean;
+  admin_verification_date?: string | null;
+  admin_verification_notes?: string | null;
 }
 
 export interface ServiceListing {
@@ -27,9 +39,12 @@ export interface ServiceListing {
   price_unit?: PriceUnit;
   availability: string | null;
   location: string | null;
+  supported_communes?: string[];
   photo_url: string | null;
+  experience_years?: number;
+  is_active?: boolean;
   created_at: string;
-  // Computed / Joined relations
+  // Relations jointes / calculées
   provider?: Profile;
   average_rating?: number;
   review_count?: number;
@@ -43,7 +58,13 @@ export interface ServiceRequest {
   note: string | null;
   status: RequestStatus;
   created_at: string;
-  // Joined relations
+  // Détails enrichis de la demande
+  child_count?: number;
+  child_age_or_grade?: string;
+  address_details?: string;
+  duration_hours?: number;
+  admin_notes?: string | null;
+  // Relations jointes
   client?: Profile;
   listing?: ServiceListing;
   review?: Review;
@@ -52,7 +73,9 @@ export interface ServiceRequest {
 export interface Review {
   id: string;
   request_id: string;
-  rating: number; // 1 to 5
+  rating: number; // 1 à 5
+  punctuality_rating?: number;
+  competence_rating?: number;
   comment: string | null;
   created_at: string;
   client?: Profile;

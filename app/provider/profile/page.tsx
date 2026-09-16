@@ -95,7 +95,7 @@ export default function ProviderProfilePage() {
 
           <div className="flex gap-2">
             <Link
-              href="/provider/listing"
+              href="/provider/annonces"
               className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition"
             >
               <Edit3 className="w-4 h-4" />
@@ -149,7 +149,7 @@ export default function ProviderProfilePage() {
           <div className="text-center py-8 space-y-3">
             <p className="text-sm text-slate-600 font-medium">Vous n'avez pas encore publié d'annonce de service.</p>
             <Link
-              href="/provider/listing"
+              href="/provider/annonces"
               className="inline-block px-5 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-xl"
             >
               Publier une annonce maintenant

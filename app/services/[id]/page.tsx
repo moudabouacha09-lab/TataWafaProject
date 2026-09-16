@@ -6,7 +6,9 @@ import Link from 'next/link';
 import { ServiceListing, Review } from '@/types';
 import { DataStore } from '@/lib/store';
 import { StarRating } from '@/components/StarRating';
-import { RequestModal } from '@/components/RequestModal';
+import { VerificationBadge } from '@/components/VerificationBadge';
+import { PriceTag } from '@/components/PriceTag';
+import { AdminCallCard } from '@/components/AdminCallCard';
 import { formatPrice, getCategoryBadge, formatDateShort, ADMIN_PHONE } from '@/lib/utils';
 import { 
   ArrowLeft, 
@@ -20,7 +22,9 @@ import {
   UserCheck2, 
   HandCoins,
   MessageSquare,
-  Loader2
+  Loader2,
+  CheckCircle2,
+  ArrowRight
 } from 'lucide-react';
 
 export default function ListingDetailPage() {
@@ -30,7 +34,6 @@ export default function ListingDetailPage() {
   const [listing, setListing] = useState<ServiceListing | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
 
   const loadData = async () => {
     if (!id) return;
@@ -75,8 +78,8 @@ export default function ListingDetailPage() {
         <h2 className="text-2xl font-bold text-slate-900">Annonce non trouvée</h2>
         <p className="text-sm text-slate-500">Cette annonce n'existe plus ou a été retirée.</p>
         <Link
-          href="/"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition"
+          href="/services"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Retour aux annonces</span>
@@ -94,11 +97,11 @@ export default function ListingDetailPage() {
       {/* Bouton retour */}
       <div>
         <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-indigo-600 transition"
+          href="/services"
+          className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-indigo-600 transition"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Retour aux annonces</span>
+          <span>Retour au catalogue des services</span>
         </Link>
       </div>
 
@@ -141,7 +144,7 @@ export default function ListingDetailPage() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6">
                 
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-2xl overflow-hidden bg-slate-200 border-2 border-indigo-100 shadow-sm shrink-0">
+                  <div className="w-16 h-16 rounded-2xl overflow-hidden bg-slate-200 border-2 border-indigo-100 shadow-sm shrink-0 flex items-center justify-center font-bold text-slate-700 text-xl">
                     {provider?.avatar_url ? (
                       <img src={provider.avatar_url} alt={provider.full_name} className="w-full h-full object-cover" />
                     ) : (
@@ -151,12 +154,12 @@ export default function ListingDetailPage() {
                     )}
                   </div>
                   <div>
-                    <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
-                      {provider?.full_name || 'Prestataire'}
-                      <span title="Identité vérifiée">
-                        <ShieldCheck className="w-5 h-5 text-emerald-600" />
-                      </span>
-                    </h1>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h1 className="text-xl sm:text-2xl font-black text-slate-900">
+                        {provider?.full_name || 'Prestataire'}
+                      </h1>
+                      <VerificationBadge status={provider?.verification_status || 'en_attente_physique'} size="sm" />
+                    </div>
                     <div className="flex items-center gap-3 text-xs text-slate-500 mt-1 flex-wrap">
                       {listing.location && (
                         <span className="flex items-center gap-1">
@@ -176,12 +179,12 @@ export default function ListingDetailPage() {
                 </div>
 
                 <div className="text-left sm:text-right">
-                  <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-                    {formatPrice(listing.price, listing.price_unit || 'séance')}
-                  </div>
-                  <span className="text-[11px] text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded font-semibold border border-emerald-200 inline-block mt-1">
-                    Paiement direct en espèces (DA)
-                  </span>
+                  <PriceTag
+                    price={listing.price}
+                    unit={listing.price_unit || 'séance'}
+                    size="lg"
+                    showCashBadge
+                  />
                 </div>
 
               </div>
@@ -191,21 +194,25 @@ export default function ListingDetailPage() {
                 <h2 className="text-lg sm:text-xl font-bold text-slate-900">
                   {listing.title}
                 </h2>
-                <div className="prose prose-slate max-w-none text-sm text-slate-700 leading-relaxed whitespace-pre-line">
+                <div className="prose prose-slate max-w-none text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line">
                   {listing.description || 'Aucune description fournie.'}
                 </div>
               </div>
 
-              {/* Biographie */}
-              {provider?.bio && (
-                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-2">
+              {/* Communes couvertes */}
+              {listing.supported_communes && listing.supported_communes.length > 0 && (
+                <div className="space-y-2">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                    <UserCheck2 className="w-4 h-4 text-indigo-600" />
-                    À propos du prestataire
+                    <MapPin className="w-4 h-4 text-indigo-600" />
+                    Communes d'intervention à Alger
                   </h3>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    {provider.bio}
-                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {listing.supported_communes.map((commune, i) => (
+                      <span key={i} className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold">
+                        {commune}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -213,9 +220,9 @@ export default function ListingDetailPage() {
               <div className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-5 flex items-start gap-3">
                 <Clock className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="text-xs font-bold text-indigo-950 uppercase tracking-wide">Créneaux & Disponibilités</h4>
+                  <h4 className="text-xs font-bold text-indigo-950 uppercase tracking-wide">Créneaux & Horaires de disponibilité</h4>
                   <p className="text-xs text-indigo-800 font-medium mt-1">
-                    {listing.availability || 'Horaires flexibles. À convenir lors de la coordination téléphonique.'}
+                    {listing.availability || 'Horaires flexibles. À valider avec le coordinateur par téléphone.'}
                   </p>
                 </div>
               </div>
@@ -248,8 +255,8 @@ export default function ListingDetailPage() {
 
             {reviews.length === 0 ? (
               <div className="text-center py-8 text-slate-400 space-y-2">
-                <p className="text-sm font-medium">Aucun avis publié pour l'instant.</p>
-                <p className="text-xs text-slate-400">Soyez parmi les premiers à réserver et partager votre retour d'expérience !</p>
+                <p className="text-xs font-semibold">Aucun avis publié pour l'instant.</p>
+                <p className="text-[11px] text-slate-400">Soyez parmi les premiers à réserver et partager votre retour d'expérience !</p>
               </div>
             ) : (
               <div className="space-y-4 divide-y divide-slate-100">
@@ -289,70 +296,59 @@ export default function ListingDetailPage() {
           <div className="sticky top-24 bg-white rounded-3xl border border-slate-200 p-6 sm:p-7 shadow-soft space-y-6">
             
             <div>
-              <span className="text-xs font-semibold text-slate-500">Tarif proposé</span>
-              <div className="text-3xl font-extrabold text-slate-900 mt-0.5">
+              <span className="text-xs font-semibold text-slate-400">Tarif proposé</span>
+              <div className="text-3xl font-black text-slate-900 mt-0.5">
                 {formatPrice(listing.price, listing.price_unit || 'séance')}
               </div>
+              <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-block mt-1">
+                Paiement direct en espèces (DA)
+              </span>
             </div>
 
-            {/* Bouton de demande */}
-            <button
-              onClick={() => setIsRequestModalOpen(true)}
-              className="w-full py-3.5 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-md shadow-indigo-200 transition flex items-center justify-center gap-2 group"
+            {/* Bouton vers le tunnel de réservation dédié */}
+            <Link
+              href={`/services/${listing.id}/reserver`}
+              className="w-full py-3.5 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-200 transition flex items-center justify-center gap-2 group"
             >
               <Calendar className="w-4 h-4 group-hover:scale-110 transition" />
-              <span>Demander ce service</span>
-            </button>
+              <span>Réserver ce service</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
 
             <p className="text-[11px] text-slate-500 text-center leading-normal">
-              Aucun paiement en ligne n'est demandé. Vous recevrez une confirmation et l'administrateur vous appellera par téléphone.
+              Aucun prélèvement en ligne. L'administrateur vous appellera par téléphone pour organiser l'intervention.
             </p>
 
             <hr className="border-slate-100" />
 
-            {/* Garanties */}
-            <div className="space-y-3.5">
-              <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                Comment se déroule la réservation
+            <div className="space-y-3 text-xs text-slate-600">
+              <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px]">
+                Garanties TataWafa Alger
               </h4>
 
-              <div className="flex items-start gap-2.5 text-xs text-slate-600">
+              <div className="flex items-start gap-2">
                 <PhoneCall className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
-                <span>
-                  <strong>1. Appel de coordination :</strong> L'administrateur vous appelle pour valider le créneau avec le prestataire.
-                </span>
+                <span>Appel téléphonique de confirmation du coordinateur.</span>
               </div>
 
-              <div className="flex items-start gap-2.5 text-xs text-slate-600">
-                <UserCheck2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <span>
-                  <strong>2. Vérification sur place :</strong> Le prestataire présente sa pièce d'identité en main propre lors de la première séance.
-                </span>
+              <div className="flex items-start gap-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <span>Contrôle physique de la carte d'identité en main propre.</span>
               </div>
 
-              <div className="flex items-start gap-2.5 text-xs text-slate-600">
+              <div className="flex items-start gap-2">
                 <HandCoins className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                <span>
-                  <strong>3. Paiement en espèces (DA) :</strong> Règlement direct de main à main à la fin de la séance ou du mois.
-                </span>
+                <span>Règlement direct de main à main en espèces (DA).</span>
               </div>
             </div>
 
           </div>
 
+          <AdminCallCard compact />
+
         </div>
 
       </div>
-
-      {/* Modal de réservation */}
-      <RequestModal
-        listing={listing}
-        isOpen={isRequestModalOpen}
-        onClose={() => setIsRequestModalOpen(false)}
-        onRequestSubmitted={() => {
-          loadData();
-        }}
-      />
 
     </div>
   );

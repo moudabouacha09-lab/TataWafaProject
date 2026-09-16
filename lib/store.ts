@@ -6,7 +6,8 @@ import {
   ServiceRequest, 
   Review, 
   RequestStatus, 
-  UserRole 
+  UserRole,
+  VerificationStatus
 } from '@/types';
 import { 
   INITIAL_PROFILES, 
@@ -17,13 +18,13 @@ import {
 import { createClient, isSupabaseConfigured } from './supabase/client';
 
 const STORAGE_KEYS = {
-  PROFILES: 'sm_profiles_v1',
-  LISTINGS: 'sm_listings_v1',
-  REQUESTS: 'sm_requests_v1',
-  REVIEWS: 'sm_reviews_v1',
+  PROFILES: 'tatawafa_profiles_v2',
+  LISTINGS: 'tatawafa_listings_v2',
+  REQUESTS: 'tatawafa_requests_v2',
+  REVIEWS: 'tatawafa_reviews_v2',
 };
 
-// Helper to get from local storage safely (Demo mode only)
+// Helper pour localStorage en mode test local
 function getLocal<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
   try {
@@ -40,13 +41,13 @@ function setLocal<T>(key: string, value: T): void {
     localStorage.setItem(key, JSON.stringify(value));
     window.dispatchEvent(new CustomEvent('sm_data_change', { detail: { key } }));
   } catch (e) {
-    console.error('Failed to write to localStorage', e);
+    console.error('Erreur écriture localStorage', e);
   }
 }
 
 export class DataStore {
   // --------------------------------------------------------------------------
-  // PROFILES
+  // PROFILS & VÉRIFICATION EN MAIN PROPRE
   // --------------------------------------------------------------------------
   static async getProfiles(role?: UserRole): Promise<Profile[]> {
     if (isSupabaseConfigured()) {
@@ -62,7 +63,6 @@ export class DataStore {
       return (data || []) as Profile[];
     }
 
-    // Demo Mode
     const profiles = getLocal<Profile[]>(STORAGE_KEYS.PROFILES, INITIAL_PROFILES);
     return role ? profiles.filter(p => p.role === role) : profiles;
   }
@@ -79,16 +79,32 @@ export class DataStore {
       return data as Profile | null;
     }
 
-    // Demo Mode
     const profiles = getLocal<Profile[]>(STORAGE_KEYS.PROFILES, INITIAL_PROFILES);
     return profiles.find(p => p.id === id) || null;
   }
 
-  static async saveProfile(profile: Profile): Promise<Profile> {
+  static async saveProfile(profile: Partial<Profile> & { id: string }): Promise<Profile> {
+    const current = await this.getProfileById(profile.id);
+    const updatedProfile: Profile = {
+      id: profile.id,
+      role: profile.role || current?.role || 'client',
+      full_name: profile.full_name || current?.full_name || 'Utilisateur',
+      phone: profile.phone ?? current?.phone ?? null,
+      location: profile.location ?? current?.location ?? 'Alger Centre',
+      avatar_url: profile.avatar_url ?? current?.avatar_url ?? null,
+      bio: profile.bio ?? current?.bio ?? null,
+      created_at: current?.created_at || new Date().toISOString(),
+      verification_status: profile.verification_status ?? current?.verification_status ?? (profile.role === 'provider' ? 'en_attente_physique' : 'non_verifie'),
+      id_card_verified: profile.id_card_verified ?? current?.id_card_verified ?? false,
+      diploma_verified: profile.diploma_verified ?? current?.diploma_verified ?? false,
+      admin_verification_date: profile.admin_verification_date ?? current?.admin_verification_date ?? null,
+      admin_verification_notes: profile.admin_verification_notes ?? current?.admin_verification_notes ?? null,
+    };
+
     if (isSupabaseConfigured()) {
       const supabase = createClient();
       if (supabase) {
-        const { data, error } = await supabase.from('profiles').upsert(profile).select().single();
+        const { data, error } = await supabase.from('profiles').upsert(updatedProfile).select().single();
         if (error) {
           console.error('Supabase saveProfile error:', error);
           throw error;
@@ -97,97 +113,114 @@ export class DataStore {
       }
     }
 
-    // Demo Mode
     const profiles = getLocal<Profile[]>(STORAGE_KEYS.PROFILES, INITIAL_PROFILES);
-    const index = profiles.findIndex(p => p.id === profile.id);
-    let updated: Profile[];
+    const index = profiles.findIndex(p => p.id === updatedProfile.id);
+    let updatedList: Profile[];
     if (index >= 0) {
-      updated = [...profiles];
-      updated[index] = { ...updated[index], ...profile };
+      updatedList = [...profiles];
+      updatedList[index] = updatedProfile;
     } else {
-      updated = [profile, ...profiles];
+      updatedList = [updatedProfile, ...profiles];
     }
-    setLocal(STORAGE_KEYS.PROFILES, updated);
-    return profile;
+    setLocal(STORAGE_KEYS.PROFILES, updatedList);
+    return updatedProfile;
+  }
+
+  static async updateVerificationStatus(
+    providerId: string, 
+    status: VerificationStatus,
+    checklist?: { id_card_verified?: boolean; diploma_verified?: boolean; notes?: string }
+  ): Promise<boolean> {
+    const profile = await this.getProfileById(providerId);
+    if (!profile) return false;
+
+    await this.saveProfile({
+      ...profile,
+      verification_status: status,
+      id_card_verified: checklist?.id_card_verified ?? profile.id_card_verified ?? false,
+      diploma_verified: checklist?.diploma_verified ?? profile.diploma_verified ?? false,
+      admin_verification_notes: checklist?.notes ?? profile.admin_verification_notes ?? null,
+      admin_verification_date: status === 'verifie_en_main_propre' ? new Date().toISOString() : profile.admin_verification_date,
+    });
+    return true;
   }
 
   // --------------------------------------------------------------------------
-  // SERVICE LISTINGS
+  // ANNONCES DE SERVICES (BABYSITTING & SOUTIEN SCOLAIRE)
   // --------------------------------------------------------------------------
-  static async getListings(filters?: { category?: string; query?: string }): Promise<ServiceListing[]> {
-    if (isSupabaseConfigured()) {
-      const supabase = createClient();
-      if (!supabase) return [];
-      
-      let q = supabase.from('service_listings').select(`
-        *,
-        provider:profiles(*)
-      `).order('created_at', { ascending: false });
-
-      if (filters?.category && filters.category !== 'all') {
-        q = q.eq('category', filters.category);
-      }
-
-      const { data, error } = await q;
-      if (error) {
-        console.error('Supabase getListings error:', error);
-        return [];
-      }
-
-      const listings = (data || []) as ServiceListing[];
-
-      // Compute reviews and ratings via Supabase reviews
-      const { data: revs } = await supabase.from('reviews').select('request_id, rating');
-      const { data: reqs } = await supabase.from('requests').select('id, listing_id');
-
-      const reviewsList = revs || [];
-      const requestsList = reqs || [];
-
-      return listings.map(item => {
-        const itemRequestIds = requestsList.filter(r => r.listing_id === item.id).map(r => r.id);
-        const itemReviews = reviewsList.filter(rev => itemRequestIds.includes(rev.request_id));
-        const ratingCount = itemReviews.length;
-        const avgRating = ratingCount > 0 
-          ? itemReviews.reduce((sum, r) => sum + r.rating, 0) / ratingCount 
-          : 0;
-
-        return {
-          ...item,
-          review_count: ratingCount,
-          average_rating: avgRating > 0 ? Number(avgRating.toFixed(1)) : undefined,
-        };
-      });
-    }
-
-    // Demo Mode
-    let listings = getLocal<ServiceListing[]>(STORAGE_KEYS.LISTINGS, INITIAL_LISTINGS);
+  static async getListings(filters?: { 
+    category?: string; 
+    query?: string;
+    commune?: string;
+    verifiedOnly?: boolean;
+    maxPrice?: number;
+  }): Promise<ServiceListing[]> {
     const profiles = await this.getProfiles();
     const reviews = await this.getAllReviews();
     const requests = await this.getRequestsRaw();
 
-    listings = listings.map(listing => ({
-      ...listing,
-      provider: profiles.find(p => p.id === listing.provider_id) || {
-        id: listing.provider_id,
-        role: 'provider',
-        full_name: 'Registered Provider',
-        location: listing.location,
+    let listings: ServiceListing[] = [];
+
+    if (isSupabaseConfigured()) {
+      const supabase = createClient();
+      if (supabase) {
+        let q = supabase.from('service_listings').select(`
+          *,
+          provider:profiles(*)
+        `).order('created_at', { ascending: false });
+
+        if (filters?.category && filters.category !== 'all') {
+          q = q.eq('category', filters.category);
+        }
+
+        const { data, error } = await q;
+        if (!error && data) {
+          listings = data as ServiceListing[];
+        }
       }
-    }));
+    } else {
+      listings = getLocal<ServiceListing[]>(STORAGE_KEYS.LISTINGS, INITIAL_LISTINGS);
+      
+      // Joindre les profils
+      listings = listings.map(item => ({
+        ...item,
+        provider: profiles.find(p => p.id === item.provider_id) || {
+          id: item.provider_id,
+          role: 'provider',
+          full_name: 'Prestataire TataWafa',
+          location: item.location,
+          verification_status: 'en_attente_physique',
+        }
+      }));
 
-    if (filters?.category && filters.category !== 'all') {
-      listings = listings.filter(l => l.category === filters.category);
-    }
-    if (filters?.query) {
-      const q = filters.query.toLowerCase();
-      listings = listings.filter(l => 
-        l.title.toLowerCase().includes(q) || 
-        (l.description && l.description.toLowerCase().includes(q)) ||
-        (l.location && l.location.toLowerCase().includes(q)) ||
-        (l.provider?.full_name && l.provider.full_name.toLowerCase().includes(q))
-      );
+      if (filters?.category && filters.category !== 'all') {
+        listings = listings.filter(l => l.category === filters.category);
+      }
+      if (filters?.commune && filters.commune !== 'all') {
+        const c = filters.commune.toLowerCase();
+        listings = listings.filter(l => 
+          (l.location && l.location.toLowerCase().includes(c)) ||
+          (l.supported_communes && l.supported_communes.some(sc => sc.toLowerCase().includes(c)))
+        );
+      }
+      if (filters?.query) {
+        const q = filters.query.toLowerCase();
+        listings = listings.filter(l => 
+          l.title.toLowerCase().includes(q) || 
+          (l.description && l.description.toLowerCase().includes(q)) ||
+          (l.location && l.location.toLowerCase().includes(q)) ||
+          (l.provider?.full_name && l.provider.full_name.toLowerCase().includes(q))
+        );
+      }
+      if (filters?.maxPrice) {
+        listings = listings.filter(l => l.price <= (filters.maxPrice as number));
+      }
+      if (filters?.verifiedOnly) {
+        listings = listings.filter(l => l.provider?.verification_status === 'verifie_en_main_propre');
+      }
     }
 
+    // Calculer notes et avis
     return listings.map(item => {
       const itemRequestIds = requests.filter(r => r.listing_id === item.id).map(r => r.id);
       const itemReviews = reviews.filter(rev => itemRequestIds.includes(rev.request_id));
@@ -209,14 +242,9 @@ export class DataStore {
     return all.find(l => l.id === id) || null;
   }
 
-  static async getProviderListings(providerId: string): Promise<ServiceListing[]> {
-    const all = await this.getListings();
-    return all.filter(l => l.provider_id === providerId);
-  }
-
   static async getProviderListing(providerId: string): Promise<ServiceListing | null> {
-    const listings = await this.getProviderListings(providerId);
-    return listings.length > 0 ? listings[0] : null;
+    const all = await this.getListings();
+    return all.find(l => l.provider_id === providerId) || null;
   }
 
   static async saveListing(listing: Partial<ServiceListing> & { provider_id: string }): Promise<ServiceListing> {
@@ -225,13 +253,16 @@ export class DataStore {
       id: listing.id || `lst_${Date.now()}`,
       provider_id: listing.provider_id,
       category: listing.category || 'babysitting',
-      title: listing.title || 'Service Proposé',
+      title: listing.title || 'Service de garde / soutien',
       description: listing.description || '',
-      price: listing.price || 1500,
+      price: listing.price || 2000,
       price_unit: listing.price_unit || 'séance',
       availability: listing.availability || 'Flexible',
       location: listing.location || 'Alger Centre',
+      supported_communes: listing.supported_communes || [listing.location || 'Alger Centre'],
       photo_url: listing.photo_url || null,
+      experience_years: listing.experience_years || 2,
+      is_active: listing.is_active !== undefined ? listing.is_active : true,
       created_at: listing.created_at || now,
     };
 
@@ -247,7 +278,6 @@ export class DataStore {
       }
     }
 
-    // Demo Mode
     const listings = getLocal<ServiceListing[]>(STORAGE_KEYS.LISTINGS, INITIAL_LISTINGS);
     const idx = listings.findIndex(l => l.id === completeListing.id);
     let updated: ServiceListing[];
@@ -262,7 +292,7 @@ export class DataStore {
   }
 
   // --------------------------------------------------------------------------
-  // SERVICE REQUESTS
+  // DEMANDES DE SERVICES & COORDINATION
   // --------------------------------------------------------------------------
   private static async getRequestsRaw(): Promise<ServiceRequest[]> {
     if (isSupabaseConfigured()) {
@@ -303,7 +333,6 @@ export class DataStore {
       return (data || []) as ServiceRequest[];
     }
 
-    // Demo Mode
     const listings = await this.getListings();
     const profiles = await this.getProfiles();
     const reviews = await this.getAllReviews();
@@ -330,12 +359,35 @@ export class DataStore {
     return hydrated.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }
 
+  static async getRequestById(id: string): Promise<ServiceRequest | null> {
+    const all = await this.getRequests();
+    return all.find(r => r.id === id) || null;
+  }
+
   static async createRequest(data: {
     client_id: string;
     listing_id: string;
     requested_datetime: string;
     note?: string;
+    child_count?: number;
+    child_age_or_grade?: string;
+    address_details?: string;
+    duration_hours?: number;
   }): Promise<ServiceRequest> {
+    const newReq: ServiceRequest = {
+      id: `req_${Date.now()}`,
+      client_id: data.client_id,
+      listing_id: data.listing_id,
+      requested_datetime: data.requested_datetime,
+      note: data.note || null,
+      status: 'new',
+      child_count: data.child_count || 1,
+      child_age_or_grade: data.child_age_or_grade || '',
+      address_details: data.address_details || '',
+      duration_hours: data.duration_hours || 2,
+      created_at: new Date().toISOString(),
+    };
+
     if (isSupabaseConfigured()) {
       const supabase = createClient();
       if (supabase) {
@@ -345,6 +397,10 @@ export class DataStore {
           requested_datetime: data.requested_datetime,
           note: data.note,
           status: 'new',
+          child_count: data.child_count || 1,
+          child_age_or_grade: data.child_age_or_grade,
+          address_details: data.address_details,
+          duration_hours: data.duration_hours,
         }).select().single();
 
         if (error) {
@@ -355,44 +411,30 @@ export class DataStore {
       }
     }
 
-    // Demo Mode
-    const newReq: ServiceRequest = {
-      id: `req_${Date.now()}`,
-      client_id: data.client_id,
-      listing_id: data.listing_id,
-      requested_datetime: data.requested_datetime,
-      note: data.note || null,
-      status: 'new',
-      created_at: new Date().toISOString(),
-    };
-
     const current = getLocal<ServiceRequest[]>(STORAGE_KEYS.REQUESTS, INITIAL_REQUESTS);
-    const updated = [newReq, ...current];
-    setLocal(STORAGE_KEYS.REQUESTS, updated);
+    setLocal(STORAGE_KEYS.REQUESTS, [newReq, ...current]);
     return newReq;
   }
 
-  static async updateRequestStatus(requestId: string, status: RequestStatus): Promise<boolean> {
+  static async updateRequestStatus(requestId: string, status: RequestStatus, adminNotes?: string): Promise<boolean> {
     if (isSupabaseConfigured()) {
       const supabase = createClient();
       if (supabase) {
+        const updatePayload: any = { status };
+        if (adminNotes !== undefined) updatePayload.admin_notes = adminNotes;
         const { error } = await supabase
           .from('requests')
-          .update({ status })
+          .update(updatePayload)
           .eq('id', requestId);
-        if (error) {
-          console.error('Supabase updateRequestStatus error:', error);
-          return false;
-        }
-        return true;
+        return !error;
       }
     }
 
-    // Demo Mode
     const current = getLocal<ServiceRequest[]>(STORAGE_KEYS.REQUESTS, INITIAL_REQUESTS);
     const index = current.findIndex(r => r.id === requestId);
     if (index >= 0) {
       current[index].status = status;
+      if (adminNotes !== undefined) current[index].admin_notes = adminNotes;
       setLocal(STORAGE_KEYS.REQUESTS, [...current]);
       return true;
     }
@@ -400,7 +442,7 @@ export class DataStore {
   }
 
   // --------------------------------------------------------------------------
-  // REVIEWS
+  // AVIS & NOTATION
   // --------------------------------------------------------------------------
   static async getAllReviews(): Promise<Review[]> {
     if (isSupabaseConfigured()) {
@@ -416,29 +458,6 @@ export class DataStore {
   }
 
   static async getReviewsForListing(listingId: string): Promise<Review[]> {
-    if (isSupabaseConfigured()) {
-      const supabase = createClient();
-      if (supabase) {
-        const { data: reqs } = await supabase.from('requests').select('id').eq('listing_id', listingId);
-        const reqIds = (reqs || []).map(r => r.id);
-        if (reqIds.length === 0) return [];
-
-        const { data: revs } = await supabase.from('reviews').select(`
-          *,
-          request:requests(
-            client:profiles!requests_client_id_fkey(*)
-          )
-        `).in('request_id', reqIds).order('created_at', { ascending: false });
-
-        return (revs || []).map((r: any) => ({
-          ...r,
-          client: r.request?.client,
-        })) as Review[];
-      }
-      return [];
-    }
-
-    // Demo Mode
     const requests = await this.getRequestsRaw();
     const reviews = await this.getAllReviews();
     const profiles = await this.getProfiles();
@@ -457,33 +476,6 @@ export class DataStore {
   }
 
   static async getReviewsForProvider(providerId: string): Promise<Review[]> {
-    if (isSupabaseConfigured()) {
-      const listings = await this.getProviderListings(providerId);
-      const listingIds = listings.map(l => l.id);
-      if (listingIds.length === 0) return [];
-
-      const supabase = createClient();
-      if (supabase) {
-        const { data: reqs } = await supabase.from('requests').select('id').in('listing_id', listingIds);
-        const reqIds = (reqs || []).map(r => r.id);
-        if (reqIds.length === 0) return [];
-
-        const { data: revs } = await supabase.from('reviews').select(`
-          *,
-          request:requests(
-            client:profiles!requests_client_id_fkey(*)
-          )
-        `).in('request_id', reqIds).order('created_at', { ascending: false });
-
-        return (revs || []).map((r: any) => ({
-          ...r,
-          client: r.request?.client,
-        })) as Review[];
-      }
-      return [];
-    }
-
-    // Demo Mode
     const listings = await this.getListings();
     const providerListingIds = listings.filter(l => l.provider_id === providerId).map(l => l.id);
     const requests = await this.getRequestsRaw();
@@ -503,7 +495,13 @@ export class DataStore {
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }
 
-  static async createReview(data: { request_id: string; rating: number; comment: string }): Promise<Review> {
+  static async createReview(data: { 
+    request_id: string; 
+    rating: number; 
+    comment: string;
+    punctuality_rating?: number;
+    competence_rating?: number;
+  }): Promise<Review> {
     if (isSupabaseConfigured()) {
       const supabase = createClient();
       if (supabase) {
@@ -521,30 +519,32 @@ export class DataStore {
       }
     }
 
-    // Demo Mode
     const newReview: Review = {
       id: `rev_${Date.now()}`,
       request_id: data.request_id,
       rating: data.rating,
+      punctuality_rating: data.punctuality_rating || data.rating,
+      competence_rating: data.competence_rating || data.rating,
       comment: data.comment,
       created_at: new Date().toISOString(),
     };
 
     const current = getLocal<Review[]>(STORAGE_KEYS.REVIEWS, INITIAL_REVIEWS);
     const filtered = current.filter(r => r.request_id !== data.request_id);
-    const updated = [newReview, ...filtered];
-    setLocal(STORAGE_KEYS.REVIEWS, updated);
+    setLocal(STORAGE_KEYS.REVIEWS, [newReview, ...filtered]);
     return newReview;
   }
 
-  // --------------------------------------------------------------------------
-  // RESET DATA HELPER (Demo mode only)
-  // --------------------------------------------------------------------------
-  static resetToDemoData() {
-    if (isSupabaseConfigured()) return;
-    setLocal(STORAGE_KEYS.PROFILES, INITIAL_PROFILES);
-    setLocal(STORAGE_KEYS.LISTINGS, INITIAL_LISTINGS);
-    setLocal(STORAGE_KEYS.REQUESTS, INITIAL_REQUESTS);
-    setLocal(STORAGE_KEYS.REVIEWS, INITIAL_REVIEWS);
+  static async deleteReview(reviewId: string): Promise<boolean> {
+    if (isSupabaseConfigured()) {
+      const supabase = createClient();
+      if (supabase) {
+        const { error } = await supabase.from('reviews').delete().eq('id', reviewId);
+        return !error;
+      }
+    }
+    const current = getLocal<Review[]>(STORAGE_KEYS.REVIEWS, INITIAL_REVIEWS);
+    setLocal(STORAGE_KEYS.REVIEWS, current.filter(r => r.id !== reviewId));
+    return true;
   }
 }

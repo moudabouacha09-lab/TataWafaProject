@@ -287,6 +287,17 @@ export default function AdminDashboardPage() {
           <BookOpen className="w-4 h-4" />
           <span>Annonces Publiées ({listings.length})</span>
         </button>
+
+        <Link
+          href="/admin/prestataires"
+          className="pb-3 text-sm font-bold flex items-center gap-2 border-b-2 border-transparent text-amber-700 hover:text-amber-900 transition"
+        >
+          <ShieldCheck className="w-4 h-4 text-amber-600" />
+          <span>Vérifications Physiques & Badges</span>
+          <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-extrabold border border-amber-300">
+            Main propre
+          </span>
+        </Link>
       </div>
 
       {/* CONTENU ONGLET 1: DEMANDES & COORDINATION */}
