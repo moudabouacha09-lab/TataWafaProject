@@ -305,19 +305,42 @@ export default function ListingDetailPage() {
               </span>
             </div>
 
-            {/* Bouton vers le tunnel de réservation dédié */}
-            <Link
-              href={`/services/${listing.id}/reserver`}
-              className="w-full py-3.5 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-200 transition flex items-center justify-center gap-2 group"
-            >
-              <Calendar className="w-4 h-4 group-hover:scale-110 transition" />
-              <span>Réserver ce service</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            {/* Bouton vers le tunnel de réservation dédié ou blocage sécurité */}
+            {provider?.verification_status === 'verifie_en_main_propre' ? (
+              <>
+                <Link
+                  href={`/services/${listing.id}/reserver`}
+                  className="w-full py-3.5 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-200 transition flex items-center justify-center gap-2 group"
+                >
+                  <Calendar className="w-4 h-4 group-hover:scale-110 transition" />
+                  <span>Réserver ce service</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
 
-            <p className="text-[11px] text-slate-500 text-center leading-normal">
-              Aucun prélèvement en ligne. L'administrateur vous appellera par téléphone pour organiser l'intervention.
-            </p>
+                <p className="text-[11px] text-slate-500 text-center leading-normal">
+                  Aucun prélèvement en ligne. L'administrateur vous appellera par téléphone pour organiser l'intervention.
+                </p>
+              </>
+            ) : (
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-2">
+                <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                  <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>Réservations suspendues</span>
+                </div>
+                <p className="text-[11px] text-amber-800 leading-relaxed">
+                  Ce profil n'a pas encore validé son contrôle physique en main propre (CNI et diplômes). Pour la sécurité des familles, les réservations sont bloquées jusqu'à vérification en face-à-face par l'administration.
+                </p>
+                <div className="pt-2 border-t border-amber-200/60">
+                  <Link
+                    href="/services"
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-900 hover:underline"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Consulter les annonces certifiées</span>
+                  </Link>
+                </div>
+              </div>
+            )}
 
             <hr className="border-slate-100" />
 

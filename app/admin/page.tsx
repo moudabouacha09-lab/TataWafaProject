@@ -31,8 +31,9 @@ import {
   Loader2,
   Trash2,
   Lock,
-  MapPin,
-  Coins
+  MapPin, 
+  Coins,
+  Star
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
@@ -63,7 +64,7 @@ export default function AdminDashboardPage() {
       const [allRequests, allProfiles, allListings] = await Promise.all([
         DataStore.getRequests(),
         DataStore.getProfiles(),
-        DataStore.getListings(),
+        DataStore.getListings({ includeUnverified: true }),
       ]);
       setRequests(allRequests);
       setProfiles(allProfiles);
@@ -297,6 +298,14 @@ export default function AdminDashboardPage() {
           <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-extrabold border border-amber-300">
             Main propre
           </span>
+        </Link>
+
+        <Link
+          href="/admin/avis"
+          className="pb-3 text-sm font-bold flex items-center gap-2 border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition"
+        >
+          <Star className="w-4 h-4 text-amber-500" />
+          <span>Modération des Avis</span>
         </Link>
       </div>
 

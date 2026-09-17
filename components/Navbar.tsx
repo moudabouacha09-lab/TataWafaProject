@@ -17,7 +17,8 @@ import {
   HelpCircle,
   MapPin,
   PlusCircle,
-  FileCheck2
+  FileCheck2,
+  Star
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -140,18 +141,41 @@ export const Navbar: React.FC = () => {
 
             {/* Liens Admin */}
             {role === 'admin' && (
-              <Link
-                href="/admin"
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg transition font-bold ${
-                  isActive('/admin')
-                    ? 'text-amber-800 bg-amber-100 border border-amber-300'
-                    : 'text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200'
-                }`}
-              >
-                <LayoutDashboard className="w-4 h-4 text-amber-600" />
-                <span>Espace Coordinateur</span>
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse ml-1" />
-              </Link>
+              <div className="flex items-center gap-1.5">
+                <Link
+                  href="/admin"
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition text-xs font-bold ${
+                    isActive('/admin') && !isActive('/admin/prestataires') && !isActive('/admin/avis')
+                      ? 'text-amber-800 bg-amber-100 border border-amber-300'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  }`}
+                >
+                  <LayoutDashboard className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Dispatching</span>
+                </Link>
+                <Link
+                  href="/admin/prestataires"
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition text-xs font-bold ${
+                    isActive('/admin/prestataires')
+                      ? 'text-amber-800 bg-amber-100 border border-amber-300'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  }`}
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Vérification Physique</span>
+                </Link>
+                <Link
+                  href="/admin/avis"
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition text-xs font-bold ${
+                    isActive('/admin/avis')
+                      ? 'text-amber-800 bg-amber-100 border border-amber-300'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  }`}
+                >
+                  <Star className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Avis</span>
+                </Link>
+              </div>
             )}
           </nav>
 
@@ -292,13 +316,29 @@ export const Navbar: React.FC = () => {
           )}
 
           {role === 'admin' && (
-            <Link
-              href="/admin"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 rounded-lg text-sm font-bold text-amber-900 bg-amber-100"
-            >
-              Espace Coordinateur Admin
-            </Link>
+            <>
+              <Link
+                href="/admin"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-sm font-bold text-amber-900 bg-amber-100"
+              >
+                Espace Coordinateur (Dispatching)
+              </Link>
+              <Link
+                href="/admin/prestataires"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-sm font-medium text-amber-800 bg-amber-50"
+              >
+                Vérifications Physiques & Badges
+              </Link>
+              <Link
+                href="/admin/avis"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100"
+              >
+                Modération des Avis
+              </Link>
+            </>
           )}
 
           <div className="pt-3 border-t border-slate-200">

@@ -152,7 +152,7 @@ export class DataStore {
     category?: string; 
     query?: string;
     commune?: string;
-    verifiedOnly?: boolean;
+    includeUnverified?: boolean; // Par défaut false : seules les annonces vérifiées en main propre apparaissent au public
     maxPrice?: number;
   }): Promise<ServiceListing[]> {
     const profiles = await this.getProfiles();
@@ -192,32 +192,35 @@ export class DataStore {
           verification_status: 'en_attente_physique',
         }
       }));
+    }
 
-      if (filters?.category && filters.category !== 'all') {
-        listings = listings.filter(l => l.category === filters.category);
-      }
-      if (filters?.commune && filters.commune !== 'all') {
-        const c = filters.commune.toLowerCase();
-        listings = listings.filter(l => 
-          (l.location && l.location.toLowerCase().includes(c)) ||
-          (l.supported_communes && l.supported_communes.some(sc => sc.toLowerCase().includes(c)))
-        );
-      }
-      if (filters?.query) {
-        const q = filters.query.toLowerCase();
-        listings = listings.filter(l => 
-          l.title.toLowerCase().includes(q) || 
-          (l.description && l.description.toLowerCase().includes(q)) ||
-          (l.location && l.location.toLowerCase().includes(q)) ||
-          (l.provider?.full_name && l.provider.full_name.toLowerCase().includes(q))
-        );
-      }
-      if (filters?.maxPrice) {
-        listings = listings.filter(l => l.price <= (filters.maxPrice as number));
-      }
-      if (filters?.verifiedOnly) {
-        listings = listings.filter(l => l.provider?.verification_status === 'verifie_en_main_propre');
-      }
+    // RÈGLE DE CONFIANCE STRICTE :
+    // Par défaut, seules les annonces dont le prestataire a été vérifié en main propre sont retournées au public
+    if (!filters?.includeUnverified) {
+      listings = listings.filter(l => l.provider?.verification_status === 'verifie_en_main_propre');
+    }
+
+    if (filters?.category && filters.category !== 'all') {
+      listings = listings.filter(l => l.category === filters.category);
+    }
+    if (filters?.commune && filters.commune !== 'all') {
+      const c = filters.commune.toLowerCase();
+      listings = listings.filter(l => 
+        (l.location && l.location.toLowerCase().includes(c)) ||
+        (l.supported_communes && l.supported_communes.some(sc => sc.toLowerCase().includes(c)))
+      );
+    }
+    if (filters?.query) {
+      const q = filters.query.toLowerCase();
+      listings = listings.filter(l => 
+        l.title.toLowerCase().includes(q) || 
+        (l.description && l.description.toLowerCase().includes(q)) ||
+        (l.location && l.location.toLowerCase().includes(q)) ||
+        (l.provider?.full_name && l.provider.full_name.toLowerCase().includes(q))
+      );
+    }
+    if (filters?.maxPrice) {
+      listings = listings.filter(l => l.price <= (filters.maxPrice as number));
     }
 
     // Calculer notes et avis
@@ -237,13 +240,13 @@ export class DataStore {
     });
   }
 
-  static async getListingById(id: string): Promise<ServiceListing | null> {
-    const all = await this.getListings();
+  static async getListingById(id: string, includeUnverified = true): Promise<ServiceListing | null> {
+    const all = await this.getListings({ includeUnverified });
     return all.find(l => l.id === id) || null;
   }
 
   static async getProviderListing(providerId: string): Promise<ServiceListing | null> {
-    const all = await this.getListings();
+    const all = await this.getListings({ includeUnverified: true });
     return all.find(l => l.provider_id === providerId) || null;
   }
 
@@ -546,5 +549,36 @@ export class DataStore {
     const current = getLocal<Review[]>(STORAGE_KEYS.REVIEWS, INITIAL_REVIEWS);
     setLocal(STORAGE_KEYS.REVIEWS, current.filter(r => r.id !== reviewId));
     return true;
+  }
+
+  static async getAdminReviews(): Promise<Array<Review & {
+    client?: Profile;
+    provider?: Profile;
+    listing?: ServiceListing;
+    request?: ServiceRequest;
+  }>> {
+    const reviews = await this.getAllReviews();
+    const requests = await this.getRequestsRaw();
+    const profiles = await this.getProfiles();
+    const listings = await this.getListings({ includeUnverified: true });
+
+    const requestMap = new Map(requests.map(r => [r.id, r]));
+    const profileMap = new Map(profiles.map(p => [p.id, p]));
+    const listingMap = new Map(listings.map(l => [l.id, l]));
+
+    return reviews.map(rev => {
+      const req = requestMap.get(rev.request_id);
+      const client = req ? profileMap.get(req.client_id) : undefined;
+      const listing = req ? listingMap.get(req.listing_id) : undefined;
+      const provider = listing ? profileMap.get(listing.provider_id) : undefined;
+
+      return {
+        ...rev,
+        client,
+        provider,
+        listing,
+        request: req,
+      };
+    }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }
 }

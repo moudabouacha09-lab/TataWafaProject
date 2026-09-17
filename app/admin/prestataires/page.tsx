@@ -19,7 +19,8 @@ import {
   Calendar,
   Lock,
   Search,
-  Filter
+  Filter,
+  Star
 } from 'lucide-react';
 
 export default function AdminPrestatairesPage() {
@@ -129,13 +130,22 @@ export default function AdminPrestatairesPage() {
           </p>
         </div>
 
-        <Link
-          href="/admin"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Retour au Dispatching</span>
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/admin/avis"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition"
+          >
+            <Star className="w-4 h-4 text-amber-500" />
+            <span>Modération des Avis</span>
+          </Link>
+          <Link
+            href="/admin"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Retour au Dispatching</span>
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

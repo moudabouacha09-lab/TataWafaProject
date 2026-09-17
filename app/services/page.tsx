@@ -29,7 +29,6 @@ function ServicesDirectoryContent() {
   const [selectedCommune, setSelectedCommune] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [maxPrice, setMaxPrice] = useState<number>(10000);
-  const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [sortBy, setSortBy] = useState<'recent' | 'rating' | 'price_asc' | 'price_desc'>('recent');
   const [loading, setLoading] = useState(true);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -37,12 +36,12 @@ function ServicesDirectoryContent() {
   const fetchListings = async () => {
     setLoading(true);
     try {
+      // Seules les annonces vérifiées en main propre sont retournées par défaut
       let data = await DataStore.getListings({
         category: selectedCategory !== 'all' ? selectedCategory : undefined,
         commune: selectedCommune !== 'all' ? selectedCommune : undefined,
         query: searchQuery || undefined,
         maxPrice: maxPrice,
-        verifiedOnly: verifiedOnly,
       });
 
       // Tri
@@ -66,14 +65,13 @@ function ServicesDirectoryContent() {
 
   useEffect(() => {
     fetchListings();
-  }, [selectedCategory, selectedCommune, maxPrice, verifiedOnly, sortBy]);
+  }, [selectedCategory, selectedCommune, maxPrice, sortBy]);
 
   const handleResetFilters = () => {
     setSelectedCategory('all');
     setSelectedCommune('all');
     setSearchQuery('');
     setMaxPrice(10000);
-    setVerifiedOnly(false);
     setSortBy('recent');
   };
 
@@ -83,14 +81,20 @@ function ServicesDirectoryContent() {
       {/* En-tête */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-6">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md">
-            Wilaya d'Alger
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
-            Catalogue des Annonces & Prestataires
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md">
+              Wilaya d'Alger
+            </span>
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              100% Vérifiés en main propre
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">
+            Catalogue des Annonces & Prestataires Certifiés
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Trouvez une nounou ou un professeur particulier disponible dans votre commune.
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            Chaque nounou et professeur listé a fait l'objet d'un contrôle physique de ses pièces originales (CNI, diplômes) par notre équipe.
           </p>
         </div>
 
@@ -192,21 +196,130 @@ function ServicesDirectoryContent() {
               </div>
             </div>
 
-            {/* Filtre Vérification Physique */}
-            <div className="pt-2 border-t border-slate-100">
-              <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
-                <input
-                  type="checkbox"
-                  checked={verifiedOnly}
-                  onChange={(e) => setVerifiedOnly(e.target.checked)}
-                  className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
-                />
-                <span>Vérifiés en main propre uniquement</span>
-              </label>
+            {/* Garantie de Confiance & Zéro Non-Vérifié */}
+            <div className="pt-3 border-t border-slate-100 bg-emerald-50/70 rounded-2xl p-4 border border-emerald-200/80 space-y-2">
+              <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Garantie 100% Vérifiés</span>
+              </div>
+              <p className="text-[11px] text-emerald-800 leading-relaxed">
+                Toutes les annonces visibles dans cet annuaire ont validé le contrôle physique en main propre (CNI et diplômes vérifiés en face-à-face). Les profils non vérifiés ne sont ni listés ni réservables.
+              </p>
             </div>
 
           </div>
         </aside>
+
+        {/* TIROIR DE FILTRES MOBILE */}
+        {mobileFiltersOpen && (
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex justify-end lg:hidden animate-in fade-in">
+            <div className="w-full max-w-xs bg-white h-full p-6 space-y-6 overflow-y-auto shadow-2xl">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
+                  <SlidersHorizontal className="w-4 h-4 text-indigo-600" />
+                  Filtres de recherche
+                </h3>
+                <button
+                  onClick={() => setMobileFiltersOpen(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Catégorie Mobile */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                  Catégorie
+                </label>
+                <div className="space-y-1.5">
+                  {[
+                    { key: 'all', label: 'Toutes les catégories' },
+                    { key: 'babysitting', label: 'Garde d\'enfants' },
+                    { key: 'teaching', label: 'Cours & Soutien scolaire' },
+                  ].map((c) => (
+                    <button
+                      key={c.key}
+                      type="button"
+                      onClick={() => { setSelectedCategory(c.key); }}
+                      className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold transition ${
+                        selectedCategory === c.key
+                          ? 'bg-indigo-600 text-white'
+                          : 'text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Commune Mobile */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                  Commune d'Alger
+                </label>
+                <select
+                  value={selectedCommune}
+                  onChange={(e) => setSelectedCommune(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none cursor-pointer"
+                >
+                  <option value="all">Toutes les 57 communes</option>
+                  {ALGER_COMMUNES.map((commune) => (
+                    <option key={commune} value={commune}>
+                      {commune}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Tarif Max Mobile */}
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Tarif Max
+                  </label>
+                  <span className="text-xs font-black text-indigo-600">{maxPrice} DA</span>
+                </div>
+                <input
+                  type="range"
+                  min={1000}
+                  max={20000}
+                  step={500}
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(Number(e.target.value))}
+                  className="w-full accent-indigo-600 cursor-pointer"
+                />
+              </div>
+
+              {/* Garantie Mobile */}
+              <div className="pt-3 border-t border-slate-100 bg-emerald-50/70 rounded-2xl p-4 border border-emerald-200/80 space-y-1.5">
+                <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>100% Vérifiés en main propre</span>
+                </div>
+                <p className="text-[11px] text-emerald-800 leading-snug">
+                  Seuls les prestataires physiquement contrôlés sont présentés.
+                </p>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 flex gap-2">
+                <button
+                  onClick={() => { handleResetFilters(); setMobileFiltersOpen(false); }}
+                  className="flex-1 py-2.5 px-3 bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold"
+                >
+                  Réinitialiser
+                </button>
+                <button
+                  onClick={() => setMobileFiltersOpen(false)}
+                  className="flex-1 py-2.5 px-3 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-sm"
+                >
+                  Appliquer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* CONTENU PRINCIPAL */}
         <div className="lg:col-span-3 space-y-6">

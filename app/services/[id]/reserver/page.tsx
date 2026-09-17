@@ -90,6 +90,37 @@ export default function BookServicePage() {
     );
   }
 
+  // Blocage de sécurité : impossible de réserver un profil non vérifié en main propre
+  if (listing.provider?.verification_status !== 'verifie_en_main_propre') {
+    return (
+      <div className="max-w-lg mx-auto py-20 px-4 text-center space-y-6">
+        <div className="w-16 h-16 rounded-3xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto border border-amber-200">
+          <ShieldCheck className="w-8 h-8" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900">
+            Réservation non autorisée pour ce profil
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+            Ce prestataire n'a pas encore validé son contrôle physique en main propre (inspection de sa pièce d'identité et de ses diplômes originaux par notre équipe).
+          </p>
+          <p className="text-xs font-semibold text-amber-800 bg-amber-50 p-3 rounded-xl border border-amber-200">
+            Pour la sécurité absolue de vos enfants, seules les réservations auprès de prestataires certifiés sont permises sur TataWafa.
+          </p>
+        </div>
+        <div>
+          <Link
+            href="/services"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md transition"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Consulter les annonces vérifiées</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const handleNextStep1 = (e: React.FormEvent) => {
     e.preventDefault();
     if (!preferredDate) {
